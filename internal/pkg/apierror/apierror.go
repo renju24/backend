@@ -16,6 +16,7 @@ var (
 	ErrorInternal           = &Error{101, "internal server error"}
 	ErrorInvalidCredentials = &Error{103, "invalid credentials"}
 	ErrorUnauthorized       = &Error{104, "invalid token"}
+	ErrorUserNotFound       = &Error{105, "user not found"}
 )
 
 var (

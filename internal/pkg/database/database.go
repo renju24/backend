@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/renju24/backend/internal/pkg/apierror"
@@ -76,5 +77,8 @@ func (db *Database) GetLoginInfo(login string) (userID int64, passwordBcrypt str
 		query += "WHERE username = $1"
 	}
 	err = db.pool.QueryRow(context.TODO(), query, login).Scan(&userID, &passwordBcrypt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, "", apierror.ErrorUserNotFound
+	}
 	return userID, passwordBcrypt, err
 }

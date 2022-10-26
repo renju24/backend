@@ -80,6 +80,7 @@ func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configRead
 	apiRoutes := a.router.Group("/api/v1")
 	{
 		apiRoutes.POST("/sign_up", signUp(a))
+		apiRoutes.POST("/sign_in", signIn(a))
 	}
 
 	return a
