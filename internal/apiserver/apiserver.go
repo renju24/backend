@@ -87,6 +87,10 @@ func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configRead
 		return
 	})
 
+	a.router.GET("/healthcheck", func(c *gin.Context) {
+		c.String(http.StatusOK, "ok")
+	})
+
 	apiRoutes := a.router.Group("/api/v1")
 	{
 		apiRoutes.POST("/sign_up", signUp(a))
