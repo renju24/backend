@@ -14,11 +14,11 @@ API будет находиться по адресу
 В случае ошибки сервер вернет HTTP статус код не равный 200 и объект ошибки в виде JSON:
 ```json
 {
-  "status": 0,
-  "error": {
-    "code": 105,
-    "description": "user not found"
-  }
+	"status": 0,
+	"error": {
+		"code": 105,
+		"description": "user not found"
+	}
 }
 ```
 где
