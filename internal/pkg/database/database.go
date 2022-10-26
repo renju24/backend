@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/renju24/backend/apimodel"
 	"github.com/renju24/backend/internal/pkg/apierror"
 	"github.com/renju24/backend/internal/pkg/config"
 )
@@ -81,4 +82,18 @@ func (db *Database) GetLoginInfo(login string) (userID int64, passwordBcrypt str
 		return 0, "", apierror.ErrorUserNotFound
 	}
 	return userID, passwordBcrypt, err
+}
+
+func (db *Database) GetUser(userID int64) (apimodel.User, error) {
+	var user apimodel.User
+	err := db.pool.QueryRow(context.TODO(), "SELECT id, username, email, ranking FROM users WHERE id = $1", userID).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Ranking,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return user, apierror.ErrorUserNotFound
+	}
+	return user, err
 }

@@ -7,6 +7,8 @@ import (
 	"syscall"
 
 	"github.com/armantarkhanian/jwt"
+	"github.com/armantarkhanian/websocket"
+	"github.com/centrifugal/centrifuge"
 	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/renju24/backend/internal/pkg/apierror"
@@ -22,10 +24,11 @@ type APIError struct {
 
 // APIServer is the main object of programm.
 type APIServer struct {
-	router *gin.Engine
-	logger *zerolog.Logger
-	config *config.Config
-	jwt    *jwt.EncodeDecoder
+	router         *gin.Engine
+	logger         *zerolog.Logger
+	config         *config.Config
+	jwt            *jwt.EncodeDecoder
+	centrifugeNode *centrifuge.Node
 
 	// Dependecies.
 	db Database
@@ -87,15 +90,37 @@ func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configRead
 		return
 	})
 
+	// GET /healthcheck
 	a.router.GET("/healthcheck", func(c *gin.Context) {
 		c.String(http.StatusOK, "ok")
 	})
 
+	// POST /api/v1/*
 	apiRoutes := a.router.Group("/api/v1")
 	{
 		apiRoutes.POST("/sign_up", signUp(a))
 		apiRoutes.POST("/sign_in", signIn(a))
 	}
+
+	// Initialize WebSocket server.
+	node, handler, err := websocket.New(websocket.Config{
+		Engine:        &websocket.MemoryEngine{},
+		ClientHandler: a,
+		NodeHandler:   a,
+		TokenLookup: websocket.TokenLookup{
+			Header:       config.Server.Token.Header.Name,
+			Cookie:       config.Server.Token.Cookie.Name,
+			HeaderPrefix: "Bearer",
+		},
+	})
+	if err != nil {
+		logger.Fatal().Err(err).Send()
+	}
+
+	a.centrifugeNode = node
+
+	// GET /websocket
+	a.router.GET("/websocket", gin.WrapH(handler))
 
 	return a
 }
