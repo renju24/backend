@@ -43,49 +43,34 @@ func (app *APIServer) OnSubscribe(c *websocket.Client, e centrifuge.SubscribeEve
 	return centrifuge.SubscribeReply{}, nil
 }
 
-type RPCMethod string
-
-const (
-	FindGame   RPCMethod = "find_game"
-	CreateGame RPCMethod = "create_game"
-	JoinGame   RPCMethod = "join_game"
-	LeftGame   RPCMethod = "left_game"
-)
-
-type RPCRequest struct {
-	Method RPCMethod
-	Data   []byte
-}
-
-func (app *APIServer) OnRPC(c *websocket.Client, e centrifuge.RPCEvent) (centrifuge.RPCReply, error) {
-	var rpc RPCRequest
-	if err := json.Unmarshal(e.Data, &rpc); err != nil {
-		return centrifuge.RPCReply{}, err
-	}
-
-	var (
-		response []byte
-		err      error
-	)
+func (apiServer *APIServer) OnRPC(c *websocket.Client, rpc centrifuge.RPCEvent) (centrifuge.RPCReply, error) {
+	var response any
+	var err error
 
 	switch rpc.Method {
-	case FindGame:
-		response, err = []byte("{}"), nil
-	case CreateGame:
-		response, err = []byte("{}"), nil
-	case JoinGame:
-		response, err = []byte("{}"), nil
-	case LeftGame:
-		response, err = []byte("{}"), nil
+	case "find_game":
+		response, err = apiServer.FindGame(c, rpc.Data)
+	case "create_game":
+		response, err = apiServer.CreateGame(c, rpc.Data)
+	case "join_game":
+		response, err = apiServer.JoinGame(c, rpc.Data)
+	case "left_game":
+		response, err = apiServer.LeftGame(c, rpc.Data)
 	default:
 		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
 	}
-
 	if err != nil {
+		apiServer.logger.Error().Err(err).Send()
 		return centrifuge.RPCReply{}, err
 	}
 
-	return centrifuge.RPCReply{Data: response}, nil
+	data, err := json.Marshal(response)
+	if err != nil {
+		apiServer.logger.Error().Err(err).Send()
+		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
+	}
+
+	return centrifuge.RPCReply{Data: data}, nil
 }
 
 func (*APIServer) OnUnsubscribe(*websocket.Client, centrifuge.UnsubscribeEvent) {}
