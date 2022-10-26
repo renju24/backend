@@ -5,4 +5,6 @@ type Database interface {
 	InsertUser(username, email, passwordBcrypt string) (userID int64, err error)
 	// Get userID and password by login.
 	GetLoginInfo(login string) (userID int64, passwordBcrypt string, err error)
+	// Close
+	Close() error
 }

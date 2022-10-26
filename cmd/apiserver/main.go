@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net"
 	"os"
@@ -28,7 +29,12 @@ func determineMachineIP() string {
 	return addrs[0]
 }
 
+var runMode string
+
 func main() {
+	flag.StringVar(&runMode, "mode", "prod", "режим запуска prod/dev")
+	flag.Parse()
+
 	var (
 		machineIP = determineMachineIP()
 		port      = ":8008"
@@ -48,7 +54,8 @@ func main() {
 
 	log.SetOutput(logger)
 
-	// Connect to database.
+	logger.Info().Msgf("Server is running in %q mode", runMode)
+
 	logger.Info().Msg("Connecting to database.")
 	db, err := database.New(os.Getenv("DATABASE_DSN"))
 	if err != nil {
