@@ -2,7 +2,7 @@ package config
 
 // Config is the object that contains the programm configuration.
 type Config struct {
-	Version int `json:"-"`
+	Version int `json:"version"`
 
 	Server struct {
 		CORS struct {

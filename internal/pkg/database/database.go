@@ -1,37 +1,35 @@
 package database
 
 import (
-	"database/sql"
+	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/renju24/backend/internal/pkg/apierror"
 	"github.com/renju24/backend/internal/pkg/config"
 )
 
 type Database struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
 func New(dsn string) (*Database, error) {
-	db, err := sql.Open("pgx", dsn)
+	db, err := pgxpool.New(context.TODO(), dsn)
 	if err != nil {
 		return nil, err
 	}
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
 	return &Database{
-		db: db,
+		pool: db,
 	}, nil
 }
 
 func (db *Database) Close() error {
-	if db.db != nil {
-		return db.db.Close()
+	if db.pool != nil {
+		db.pool.Close()
 	}
 	return nil
 }
@@ -43,7 +41,7 @@ func (db *Database) ReadConfig() (*config.Config, error) {
 		configJSON    []byte
 		config        config.Config
 	)
-	if err := db.db.QueryRow(query).Scan(&configVersion, &configJSON); err != nil {
+	if err := db.pool.QueryRow(context.TODO(), query).Scan(&configVersion, &configJSON); err != nil {
 		return nil, err
 	}
 	if err := json.Unmarshal(configJSON, &config); err != nil {
@@ -55,12 +53,13 @@ func (db *Database) ReadConfig() (*config.Config, error) {
 
 func (db *Database) InsertUser(username, email, passwordBcrypt string) (userID int64, err error) {
 	query := `INSERT INTO users (username, email, password_bcrypt, ranking) VALUES ($1, $2, $3, 400) RETURNING id;`
-	if err = db.db.QueryRow(query, username, email, passwordBcrypt).Scan(&userID); err != nil {
-		if pgxErr, ok := err.(*pgconn.PgError); ok {
-			if pgxErr.ColumnName == "username" && pgxErr.Code == pgerrcode.UniqueViolation {
+	if err = db.pool.QueryRow(context.TODO(), query, username, email, passwordBcrypt).Scan(&userID); err != nil {
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) {
+			if pgxErr.ConstraintName == "unique_username" && pgxErr.Code == pgerrcode.UniqueViolation {
 				return 0, apierror.ErrorUsernameIsTaken
 			}
-			if pgxErr.ColumnName == "email" && pgxErr.Code == pgerrcode.UniqueViolation {
+			if pgxErr.ConstraintName == "unique_email" && pgxErr.Code == pgerrcode.UniqueViolation {
 				return 0, apierror.ErrorEmailIsTaken
 			}
 		}
@@ -76,6 +75,6 @@ func (db *Database) GetLoginInfo(login string) (userID int64, passwordBcrypt str
 	} else {
 		query += "WHERE username = $1"
 	}
-	err = db.db.QueryRow(query, login).Scan(&userID, &passwordBcrypt)
+	err = db.pool.QueryRow(context.TODO(), query, login).Scan(&userID, &passwordBcrypt)
 	return userID, passwordBcrypt, err
 }

@@ -3,10 +3,12 @@ package apiserver
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/armantarkhanian/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/renju24/backend/internal/pkg/apierror"
@@ -35,6 +37,12 @@ func signUp(api *APIServer) gin.HandlerFunc {
 			return
 		}
 		if err := req.Validate(); err != nil {
+			if apiErr, ok := err.(*apierror.Error); ok {
+				c.JSON(http.StatusBadRequest, &APIError{
+					Error: apiErr,
+				})
+				return
+			}
 			c.JSON(http.StatusBadRequest, &APIError{
 				Error: apierror.ErrorInvalidBody,
 			})
@@ -47,7 +55,7 @@ func signUp(api *APIServer) gin.HandlerFunc {
 			})
 			return
 		}
-		_, err = api.db.InsertUser(req.Username, req.Email, string(passwordBcrypt))
+		userID, err := api.db.InsertUser(req.Username, req.Email, string(passwordBcrypt))
 		if err != nil {
 			if errors.Is(err, apierror.ErrorUsernameIsTaken) {
 				c.JSON(http.StatusBadRequest, &APIError{
@@ -67,9 +75,20 @@ func signUp(api *APIServer) gin.HandlerFunc {
 			return
 		}
 
+		jwtToken, err := api.jwt.Encode(jwt.Payload{
+			Subject:        strconv.FormatInt(userID, 10),
+			ExpirationTime: int64(api.config.Server.Token.Cookie.MaxAge),
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, &APIError{
+				Error: apierror.ErrorInternal,
+			})
+			return
+		}
+
 		resp := signupResponse{
 			Status: 1,
-			Token:  "", // TODO: generate JWT-token.
+			Token:  jwtToken,
 		}
 
 		c.SetCookie(
@@ -102,12 +121,15 @@ func (req *signupRequest) Validate() error {
 		return apierror.ErrorRepeatedPasswordIsRequired
 	}
 	usernameLength := utf8.RuneCountInString(req.Username)
-	if usernameLength < 2 || usernameLength > 32 {
+	if usernameLength < 4 || usernameLength > 32 {
 		return apierror.ErrorInvalidUsernameLength
 	}
 	emailLength := utf8.RuneCountInString(req.Email)
-	if emailLength < 2 || emailLength > 84 {
+	if emailLength < 5 || emailLength > 84 {
 		return apierror.ErrorInvalidEmailLength
+	}
+	if strings.Count(req.Email, "@") != 1 {
+		return apierror.ErrorInvalidEmail
 	}
 	passwordLength := utf8.RuneCountInString(req.Password)
 	if passwordLength < 8 || passwordLength > 64 {
@@ -115,29 +137,23 @@ func (req *signupRequest) Validate() error {
 	}
 
 	var (
-		hasUpper bool
-		hasLower bool
-		hasDigit bool
+		hasLetter bool
+		hasDigit  bool
 	)
 
 	for _, char := range req.Password {
 		switch {
-		case char > unicode.MaxASCII:
-			return apierror.ErrorInvalidPasswordCharacter
-		case unicode.IsUpper(char):
-			hasUpper = true
-		case unicode.IsLower(char):
-			hasLower = true
+		case unicode.IsLetter(char):
+			hasLetter = true
 		case unicode.IsDigit(char):
 			hasDigit = true
+		default:
+			return apierror.ErrorInvalidPasswordCharacter
 		}
 	}
 
-	if !hasUpper {
+	if !hasLetter {
 		return apierror.ErrorMissingUpperInPassword
-	}
-	if !hasLower {
-		return apierror.ErrorMissingLowerInPassword
 	}
 	if !hasDigit {
 		return apierror.ErrorMissingDigitInPassword

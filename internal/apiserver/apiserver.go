@@ -3,6 +3,7 @@ package apiserver
 import (
 	"net/http"
 
+	"github.com/armantarkhanian/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/renju24/backend/internal/pkg/apierror"
 	"github.com/renju24/backend/internal/pkg/config"
@@ -20,6 +21,7 @@ type APIServer struct {
 	router *gin.Engine
 	logger *zerolog.Logger
 	config *config.Config
+	jwt    *jwt.EncodeDecoder
 
 	// Dependecies.
 	db Database
@@ -43,9 +45,24 @@ func NewAPIServer(db Database, router *gin.Engine, logger *zerolog.Logger, confi
 }
 
 func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configReader ConfigReader) *APIServer {
+	// Read config from database.
+	logger.Info().Msg("Reading config from configReader.")
+	config, err := configReader.ReadConfig()
+	if err != nil {
+		logger.Fatal().Err(err).Send()
+	}
+	logger.Info().Interface("config", config).Send()
+
+	jwtEncodeDecoder, err := jwt.New(config.Server.Token.SigningKey)
+	if err != nil {
+		logger.Fatal().Err(err).Send()
+	}
+
 	a := &APIServer{
 		router:       router,
 		logger:       logger,
+		config:       config,
+		jwt:          jwtEncodeDecoder,
 		db:           db,
 		ConfigReader: configReader,
 	}
@@ -62,7 +79,7 @@ func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configRead
 
 	apiRoutes := a.router.Group("/api/v1")
 	{
-		apiRoutes.POST("/api/v1/sign_up", signUp(a))
+		apiRoutes.POST("/sign_up", signUp(a))
 	}
 
 	return a
