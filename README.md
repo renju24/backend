@@ -1,1 +1,1 @@
-Документация https://github.com/renju24/backend/wiki/API-v1
+Документация https://github.com/renju24/backend/wiki
