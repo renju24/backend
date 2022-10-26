@@ -54,7 +54,7 @@ func (db *Database) ReadConfig() (*config.Config, error) {
 }
 
 func (db *Database) InsertUser(username string, email string, passwordBcrypt string) (userID int64, err error) {
-	query := `INSERT INTO users (username, email, password_bcrypt) VALUES ($1, $2, $3) RETURNING id;`
+	query := `INSERT INTO users (username, email, password_bcrypt, ranking) VALUES ($1, $2, $3, 400) RETURNING id;`
 	err = db.db.QueryRow(query, username, email, passwordBcrypt).Scan(&userID)
 	if err != nil {
 		if pgxErr, ok := err.(*pgconn.PgError); ok {
