@@ -1,14 +1,16 @@
 package apiserver
 
-import "github.com/renju24/backend/apimodel"
+import (
+	"github.com/renju24/backend/model"
+)
 
 type Database interface {
-	// Insert user into database.
-	InsertUser(username, email, passwordBcrypt string) (userID int64, err error)
-	// Get userID and password by login.
-	GetLoginInfo(login string) (userID int64, passwordBcrypt string, err error)
-	// Get user.
-	GetUser(userID int64) (apimodel.User, error)
+	// Create new user.
+	CreateUser(username, email, passwordBcrypt string) (*model.User, error)
+	// Get user by login.
+	GetUserByLogin(login string) (*model.User, error)
+	// Get user by ID.
+	GetUserByID(userID int64) (*model.User, error)
 	// Close
 	Close() error
 }

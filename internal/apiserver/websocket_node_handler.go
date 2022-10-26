@@ -31,7 +31,7 @@ func (apiServer *APIServer) OnConnecting(_ *centrifuge.Node, e centrifuge.Connec
 		return nil, centrifuge.ConnectReply{}, centrifuge.DisconnectInvalidToken
 	}
 
-	user, err := apiServer.db.GetUser(userID)
+	user, err := apiServer.db.GetUserByID(userID)
 	if err != nil {
 		return nil, centrifuge.ConnectReply{}, centrifuge.DisconnectInvalidToken
 	}
@@ -42,7 +42,12 @@ func (apiServer *APIServer) OnConnecting(_ *centrifuge.Node, e centrifuge.Connec
 	}
 
 	websocketSession := WebsocketSession{
-		User: user,
+		User: apimodel.User{
+			ID:       user.ID,
+			Username: user.Username,
+			Email:    user.Email,
+			Ranking:  user.Ranking,
+		},
 	}
 
 	return &websocketSession, centrifuge.ConnectReply{Data: b}, nil

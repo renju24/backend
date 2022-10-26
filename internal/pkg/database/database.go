@@ -10,9 +10,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/renju24/backend/apimodel"
 	"github.com/renju24/backend/internal/pkg/apierror"
 	"github.com/renju24/backend/internal/pkg/config"
+	"github.com/renju24/backend/model"
 )
 
 type Database struct {
@@ -53,47 +53,63 @@ func (db *Database) ReadConfig() (*config.Config, error) {
 	return &config, nil
 }
 
-func (db *Database) InsertUser(username, email, passwordBcrypt string) (userID int64, err error) {
-	query := `INSERT INTO users (username, email, password_bcrypt, ranking) VALUES ($1, $2, $3, 400) RETURNING id;`
-	if err = db.pool.QueryRow(context.TODO(), query, username, email, passwordBcrypt).Scan(&userID); err != nil {
+func (db *Database) CreateUser(username, email, passwordBcrypt string) (*model.User, error) {
+	user := model.User{
+		Username:       username,
+		Email:          email,
+		PasswordBcrypt: passwordBcrypt,
+	}
+	query := `INSERT INTO users (username, email, password_bcrypt) VALUES ($1, $2, $3) RETURNING id, ranking;`
+	if err := db.pool.QueryRow(context.TODO(), query, username, email, passwordBcrypt).Scan(
+		&user.ID,
+		&user.Ranking,
+	); err != nil {
 		var pgxErr *pgconn.PgError
 		if errors.As(err, &pgxErr) {
 			if pgxErr.ConstraintName == "unique_username" && pgxErr.Code == pgerrcode.UniqueViolation {
-				return 0, apierror.ErrorUsernameIsTaken
+				return nil, apierror.ErrorUsernameIsTaken
 			}
 			if pgxErr.ConstraintName == "unique_email" && pgxErr.Code == pgerrcode.UniqueViolation {
-				return 0, apierror.ErrorEmailIsTaken
+				return nil, apierror.ErrorEmailIsTaken
 			}
 		}
-		return 0, err
+		return nil, err
 	}
-	return userID, err
+	return &user, nil
 }
 
-func (db *Database) GetLoginInfo(login string) (userID int64, passwordBcrypt string, err error) {
-	query := "SELECT id, password_bcrypt FROM users "
+func (db *Database) GetUserByLogin(login string) (*model.User, error) {
+	query := "SELECT id, username, email, ranking, password_bcrypt FROM users "
 	if strings.Contains(login, "@") {
 		query += "WHERE email = $1"
 	} else {
 		query += "WHERE username = $1"
 	}
-	err = db.pool.QueryRow(context.TODO(), query, login).Scan(&userID, &passwordBcrypt)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return 0, "", apierror.ErrorUserNotFound
-	}
-	return userID, passwordBcrypt, err
-}
-
-func (db *Database) GetUser(userID int64) (apimodel.User, error) {
-	var user apimodel.User
-	err := db.pool.QueryRow(context.TODO(), "SELECT id, username, email, ranking FROM users WHERE id = $1", userID).Scan(
+	var user model.User
+	err := db.pool.QueryRow(context.TODO(), query, login).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,
 		&user.Ranking,
+		&user.PasswordBcrypt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return user, apierror.ErrorUserNotFound
+		return nil, apierror.ErrorUserNotFound
 	}
-	return user, err
+	return &user, err
+}
+
+func (db *Database) GetUserByID(userID int64) (*model.User, error) {
+	var user model.User
+	err := db.pool.QueryRow(context.TODO(), "id, username, email, ranking, password_bcrypt FROM users WHERE id = $1", userID).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Ranking,
+		&user.PasswordBcrypt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, apierror.ErrorUserNotFound
+	}
+	return &user, err
 }

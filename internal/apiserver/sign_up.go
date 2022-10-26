@@ -11,6 +11,7 @@ import (
 	"github.com/armantarkhanian/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/renju24/backend/apimodel"
 	"github.com/renju24/backend/internal/pkg/apierror"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -23,8 +24,9 @@ type signupRequest struct {
 }
 
 type signupResponse struct {
-	Status int    `json:"status"`
-	Token  string `json:"token"`
+	Status int           `json:"status"`
+	Token  string        `json:"token"`
+	User   apimodel.User `json:"user"`
 }
 
 func signUp(api *APIServer) gin.HandlerFunc {
@@ -55,7 +57,7 @@ func signUp(api *APIServer) gin.HandlerFunc {
 			})
 			return
 		}
-		userID, err := api.db.InsertUser(req.Username, req.Email, string(passwordBcrypt))
+		user, err := api.db.CreateUser(req.Username, req.Email, string(passwordBcrypt))
 		if err != nil {
 			if errors.Is(err, apierror.ErrorUsernameIsTaken) {
 				c.JSON(http.StatusBadRequest, &APIError{
@@ -76,7 +78,7 @@ func signUp(api *APIServer) gin.HandlerFunc {
 		}
 
 		jwtToken, err := api.jwt.Encode(jwt.Payload{
-			Subject:        strconv.FormatInt(userID, 10),
+			Subject:        strconv.FormatInt(user.ID, 10),
 			ExpirationTime: int64(api.config.Server.Token.Cookie.MaxAge),
 		})
 		if err != nil {
@@ -89,6 +91,12 @@ func signUp(api *APIServer) gin.HandlerFunc {
 		resp := signupResponse{
 			Status: 1,
 			Token:  jwtToken,
+			User: apimodel.User{
+				ID:       user.ID,
+				Username: user.Username,
+				Email:    user.Email,
+				Ranking:  user.Ranking,
+			},
 		}
 
 		c.SetCookie(
