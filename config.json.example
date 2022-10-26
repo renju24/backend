@@ -1,0 +1,24 @@
+{
+  "server": {
+	"cors": {
+	  "same_site": "strict",
+	  "access_control_allow_origin": "*",
+	  "access_control_allow_credentials": true
+	},
+
+	"token": {
+	  "signing_key": "SECRET KEY",
+	  "cookie": {
+		"name": "COOKIE_NAME",
+		"max_age": 3600,
+		"path": "/",
+		"domain": "localhost",
+		"secure": false,
+		"http_only": true
+	  },
+	  "header": {
+		"name": "Authorization"
+	  }
+	}
+  }
+}
