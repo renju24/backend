@@ -2,7 +2,7 @@ vendor: ## download vendors
 	go mod vendor
 
 build: ## build api-server
-	go build -mod=vendor -o ./build/api-server -v ./cmd/api-server
+	go build -mod=vendor -o ./build/apiserver -v ./cmd/apiserver
 
 test: ## run tests
 	go test ./...
