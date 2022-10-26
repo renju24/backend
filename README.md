@@ -4,3 +4,4 @@
 - [x] - Authorization
 - [ ] - Authorization with Google
 - [ ] - API Documentation
+- [ ] - Websocket server
