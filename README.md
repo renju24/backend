@@ -1,11 +1,11 @@
-# Feature matrix
-- [x] - Game logic (+ unit tests)
-- [x] - Registration
-- [x] - Authorization
-- [ ] - Authorization with Google
-- [ ] - Websocket server
+# Roadmap
+- [x] - Игровая логика (+ unit тесты)
+- [x] - Регистрация пользователей
+- [x] - Авторизация пользователей
+- [ ] - Вход через сторонние сервисы
+- [ ] - WebSocket сервер
 
-# API v1 Documentation
+# API v1 Документация
 Backend содержит в себе HTTP REST API и WebSocket-сервер.
 
 HTTP REST API будет использоваться только для двух функций:
