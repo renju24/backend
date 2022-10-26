@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
@@ -112,4 +113,18 @@ func (db *Database) GetUserByID(userID int64) (*model.User, error) {
 		return nil, apierror.ErrorUserNotFound
 	}
 	return &user, err
+}
+
+func (db *Database) CreateGame(blackUserID, whiteUserID int64) (*model.Game, error) {
+	now := time.Now()
+	game := model.Game{
+		BlackUserID: blackUserID,
+		WhiteUserID: whiteUserID,
+		StartedAt:   now,
+	}
+	query := `INSERT INTO games (black_user_id, white_user_id, started_at) VALUES ($1, $2, $3) RETURNING id;`
+	if err := db.pool.QueryRow(context.TODO(), query, blackUserID, whiteUserID, now).Scan(&game.ID); err != nil {
+		return nil, err
+	}
+	return &game, nil
 }

@@ -11,6 +11,10 @@ type Database interface {
 	GetUserByLogin(login string) (*model.User, error)
 	// Get user by ID.
 	GetUserByID(userID int64) (*model.User, error)
+
+	// Create new game.
+	CreateGame(blackUserID, whiteUserID int64) (*model.Game, error)
+
 	// Close
 	Close() error
 }
