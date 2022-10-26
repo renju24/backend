@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"encoding/json"
 	"strconv"
 	"strings"
 
@@ -42,6 +43,51 @@ func (app *APIServer) OnSubscribe(c *websocket.Client, e centrifuge.SubscribeEve
 	return centrifuge.SubscribeReply{}, nil
 }
 
+type RPCMethod string
+
+const (
+	FindGame   RPCMethod = "find_game"
+	CreateGame RPCMethod = "create_game"
+	JoinGame   RPCMethod = "join_game"
+	LeftGame   RPCMethod = "left_game"
+)
+
+type RPCRequest struct {
+	Method RPCMethod
+	Data   []byte
+}
+
+func (app *APIServer) OnRPC(c *websocket.Client, e centrifuge.RPCEvent) (centrifuge.RPCReply, error) {
+	var rpc RPCRequest
+	if err := json.Unmarshal(e.Data, &rpc); err != nil {
+		return centrifuge.RPCReply{}, err
+	}
+
+	var (
+		response []byte
+		err      error
+	)
+
+	switch rpc.Method {
+	case FindGame:
+		response, err = []byte("{}"), nil
+	case CreateGame:
+		response, err = []byte("{}"), nil
+	case JoinGame:
+		response, err = []byte("{}"), nil
+	case LeftGame:
+		response, err = []byte("{}"), nil
+	default:
+		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
+	}
+
+	if err != nil {
+		return centrifuge.RPCReply{}, err
+	}
+
+	return centrifuge.RPCReply{Data: response}, nil
+}
+
 func (*APIServer) OnUnsubscribe(*websocket.Client, centrifuge.UnsubscribeEvent) {}
 
 func (*APIServer) OnPublish(*websocket.Client, centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
@@ -64,10 +110,6 @@ func (*APIServer) OnPresence(*websocket.Client, centrifuge.PresenceEvent) (centr
 
 func (*APIServer) OnPresenceStats(*websocket.Client, centrifuge.PresenceStatsEvent) (centrifuge.PresenceStatsReply, error) {
 	return centrifuge.PresenceStatsReply{}, nil
-}
-
-func (*APIServer) OnRPC(*websocket.Client, centrifuge.RPCEvent) (centrifuge.RPCReply, error) {
-	return centrifuge.RPCReply{}, nil
 }
 
 func (*APIServer) OnHistory(*websocket.Client, centrifuge.HistoryEvent) (centrifuge.HistoryReply, error) {
