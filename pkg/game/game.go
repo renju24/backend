@@ -39,7 +39,7 @@ var (
 
 func (g *Game) ApplyMove(move Move) (winner int, err error) {
 	// Check the coordinates are not outside the board.
-	if move.x > BoardSize || move.x < 0 || move.y > BoardSize || move.y < 0 {
+	if move.x >= BoardSize || move.x < 0 || move.y >= BoardSize || move.y < 0 {
 		return 0, ErrCoordinatesOutside
 	}
 	// Check the field is not already taken.

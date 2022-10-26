@@ -1,6 +1,9 @@
 build: ## build api-server
 	go build -mod=vendor -o ./build/api-server -v ./cmd/api-server
 
+test: ## run tests
+	go test ./...
+
 .PHONY: build
 
 help:
