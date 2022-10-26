@@ -23,30 +23,31 @@ type APIServer struct {
 
 	// Dependecies.
 	db Database
+	ConfigReader
 }
 
 // Run runs the HTTP server.
-func (a *APIServer) Run() error {
-	return a.router.Run(a.config.Server.Addr)
+func (a *APIServer) Run(port string) error {
+	return a.router.Run(port)
 }
 
 // APIServer should be a singleton, so make it global.
 var singleton *APIServer
 
 // NewAPIServer creates a singleton APIServer object.
-func NewAPIServer(db Database, router *gin.Engine, logger *zerolog.Logger, config *config.Config) *APIServer {
+func NewAPIServer(db Database, router *gin.Engine, logger *zerolog.Logger, configReader ConfigReader) *APIServer {
 	if singleton == nil {
-		singleton = initApi(db, router, logger, config)
+		singleton = initApi(db, router, logger, configReader)
 	}
 	return singleton
 }
 
-func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, config *config.Config) *APIServer {
+func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configReader ConfigReader) *APIServer {
 	a := &APIServer{
-		router: router,
-		logger: logger,
-		config: config,
-		db:     db,
+		router:       router,
+		logger:       logger,
+		db:           db,
+		ConfigReader: configReader,
 	}
 
 	a.router.Use(

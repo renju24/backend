@@ -19,6 +19,7 @@ var (
 )
 
 var (
+	ErrorUsernameIsTaken            = &Error{200, "username is already taken"}
 	ErrorUsernameIsRequired         = &Error{201, "username is required"}
 	ErrorEmailIsRequired            = &Error{202, "email is required"}
 	ErrorPasswordIsRequired         = &Error{203, "password is required"}

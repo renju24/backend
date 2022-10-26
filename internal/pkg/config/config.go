@@ -1,11 +1,10 @@
 package config
 
-// TODO:
 // Config is the object that contains the programm configuration.
 type Config struct {
-	Server struct {
-		Addr string `json:"addr"`
+	Version int `json:"-"`
 
+	Server struct {
 		CORS struct {
 			SameSite                      string `json:"same_site"`
 			AccessControlAllowOrigin      string `json:"access_control_allow_origin"`

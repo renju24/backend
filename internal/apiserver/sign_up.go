@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 	"unicode"
@@ -46,13 +47,14 @@ func signUp(api *APIServer) gin.HandlerFunc {
 			})
 			return
 		}
-		_, err = api.db.InsertUser(
-			req.Username,
-			req.Email,
-			string(passwordBcrypt),
-		)
+		_, err = api.db.InsertUser(req.Username, req.Email, string(passwordBcrypt))
 		if err != nil {
-			// TODO: check error if username is already taken.
+			if errors.Is(err, apierror.ErrorUsernameIsTaken) {
+				c.JSON(http.StatusBadRequest, &APIError{
+					Error: apierror.ErrorUsernameIsTaken,
+				})
+				return
+			}
 			c.JSON(http.StatusInternalServerError, &APIError{
 				Error: apierror.ErrorInternal,
 			})
