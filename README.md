@@ -1,5 +1,5 @@
 # Feature matrix
-- [x] - Game logic
+- [x] - Game logic (+ unit tests)
 - [x] - Registration
 - [x] - Authorization
 - [ ] - Authorization with Google
