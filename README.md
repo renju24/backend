@@ -43,7 +43,13 @@ error - объект ошибки, где code - это числовой код 
 ```json
 {
 	"status": 1,
-	"token": "<JWT_TOKEN>"
+	"token": "<JWT_TOKEN>",
+	"user": {
+		"id": 1,
+		"username": "user1",
+		"email": "user1@gmail.com",
+		"ranking": 400
+	}
 }
 ```
 Полученный JWT_TOKEN нужно надежно сохранить в мобильном приложении и добавлять его в заголовок Authorization: Bearer <JWT_TOKEN> при последующих запросах.
@@ -84,7 +90,13 @@ error - объект ошибки, где code - это числовой код 
 ```json
 {
 	"status": 1,
-	"token": "<JWT_TOKEN>"
+	"token": "<JWT_TOKEN>",
+	"user": {
+		"id": 1,
+		"username": "user1",
+		"email": "user1@gmail.com",
+		"ranking": 400
+	}
 }
 ```
 
