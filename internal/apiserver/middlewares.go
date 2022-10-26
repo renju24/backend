@@ -21,7 +21,7 @@ func corsMiddleware(a *APIServer) gin.HandlerFunc {
 		case "none":
 			c.SetSameSite(http.SameSiteNoneMode)
 		}
-		c.Header("Access-Control-Allow-Origin", a.config.Server.CORS.AccessControlAllowOrigin) // for vue3 local app
+		c.Header("Access-Control-Allow-Origin", a.config.Server.CORS.AccessControlAllowOrigin)
 		if a.config.Server.CORS.AccessControlAllowCredentials {
 			c.Header("Access-Control-Allow-Credentials", "true")
 		}
@@ -61,7 +61,6 @@ func loggerMiddleware(a *APIServer) gin.HandlerFunc {
 			Str("clientIP", c.ClientIP()).
 			Int("status", c.Writer.Status()).
 			Int("size", c.Writer.Size()).
-			Str("country", c.GetString("country")).
 			Str("requestID", requestID.String()).
 			Str("endpoint", path).Send()
 	}
