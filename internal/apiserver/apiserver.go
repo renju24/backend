@@ -1,9 +1,13 @@
 package apiserver
 
 import (
+	"context"
 	"net/http"
+	"os/signal"
+	"syscall"
 
 	"github.com/armantarkhanian/jwt"
+	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/renju24/backend/internal/pkg/apierror"
 	"github.com/renju24/backend/internal/pkg/config"
@@ -29,8 +33,14 @@ type APIServer struct {
 }
 
 // Run runs the HTTP server.
-func (a *APIServer) Run(port string) error {
-	return a.router.Run(port)
+func (a *APIServer) Run(port, runMode string) error {
+	if runMode == "prod" {
+		ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+		defer stop()
+		return autotls.RunWithContext(ctx, a.router, a.config.Server.Token.Cookie.Domain)
+	} else {
+		return a.router.Run(port)
+	}
 }
 
 // APIServer should be a singleton, so make it global.

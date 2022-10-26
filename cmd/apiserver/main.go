@@ -32,7 +32,7 @@ func determineMachineIP() string {
 var runMode string
 
 func main() {
-	flag.StringVar(&runMode, "mode", "prod", "режим запуска prod/dev")
+	flag.StringVar(&runMode, "mode", "dev", "режим запуска prod/dev")
 	flag.Parse()
 
 	var (
@@ -67,7 +67,8 @@ func main() {
 	server := apiserver.NewAPIServer(db, gin.New(), &logger, db)
 
 	logger.Info().Str("port", port).Msg("Running api server")
-	if err := server.Run(port); err != nil {
+
+	if err := server.Run(port, runMode); err != nil {
 		logger.Fatal().Err(err).Send()
 	}
 }
