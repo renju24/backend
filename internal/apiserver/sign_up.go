@@ -55,6 +55,12 @@ func signUp(api *APIServer) gin.HandlerFunc {
 				})
 				return
 			}
+			if errors.Is(err, apierror.ErrorEmailIsTaken) {
+				c.JSON(http.StatusBadRequest, &APIError{
+					Error: apierror.ErrorEmailIsTaken,
+				})
+				return
+			}
 			c.JSON(http.StatusInternalServerError, &APIError{
 				Error: apierror.ErrorInternal,
 			})

@@ -61,6 +61,9 @@ func (db *Database) InsertUser(username string, email string, passwordBcrypt str
 			if pgxErr.ColumnName == "username" && pgxErr.Code == pgerrcode.UniqueViolation {
 				return 0, apierror.ErrorUsernameIsTaken
 			}
+			if pgxErr.ColumnName == "email" && pgxErr.Code == pgerrcode.UniqueViolation {
+				return 0, apierror.ErrorEmailIsTaken
+			}
 		}
 		return 0, err
 	}

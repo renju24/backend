@@ -20,18 +20,19 @@ var (
 
 var (
 	ErrorUsernameIsTaken            = &Error{200, "username is already taken"}
-	ErrorUsernameIsRequired         = &Error{201, "username is required"}
-	ErrorEmailIsRequired            = &Error{202, "email is required"}
-	ErrorPasswordIsRequired         = &Error{203, "password is required"}
-	ErrorRepeatedPasswordIsRequired = &Error{204, "repeated_password is required"}
+	ErrorEmailIsTaken               = &Error{201, "email is already taken"}
+	ErrorUsernameIsRequired         = &Error{202, "username is required"}
+	ErrorEmailIsRequired            = &Error{203, "email is required"}
+	ErrorPasswordIsRequired         = &Error{204, "password is required"}
+	ErrorRepeatedPasswordIsRequired = &Error{205, "repeated_password is required"}
 
-	ErrorInvalidUsernameLength    = &Error{205, "invalid username length"}
-	ErrorInvalidEmailLength       = &Error{206, "invalid email length"}
-	ErrorInvalidPasswordLength    = &Error{207, "invalid password length"}
-	ErrorInvalidPasswordCharacter = &Error{208, "invalid password character"}
+	ErrorInvalidUsernameLength    = &Error{206, "invalid username length"}
+	ErrorInvalidEmailLength       = &Error{207, "invalid email length"}
+	ErrorInvalidPasswordLength    = &Error{208, "invalid password length"}
+	ErrorInvalidPasswordCharacter = &Error{209, "invalid password character"}
 
-	ErrorMissingUpperInPassword = &Error{209, "missing upper character"}
-	ErrorMissingLowerInPassword = &Error{210, "missing lower character"}
-	ErrorMissingDigitInPassword = &Error{211, "missing digit character"}
-	ErrorPasswordsNotEqual      = &Error{212, "passwords are not equal"}
+	ErrorMissingUpperInPassword = &Error{210, "missing upper character"}
+	ErrorMissingLowerInPassword = &Error{211, "missing lower character"}
+	ErrorMissingDigitInPassword = &Error{212, "missing digit character"}
+	ErrorPasswordsNotEqual      = &Error{213, "passwords are not equal"}
 )
