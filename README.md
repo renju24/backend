@@ -3,5 +3,5 @@
 - [x] - Registration
 - [x] - Authorization
 - [ ] - Authorization with Google
-- [ ] - API Documentation
+- [x] - [API Documentation](https://github.com/renju24/backend/wiki/API-v1-Documentation)
 - [ ] - Websocket server
