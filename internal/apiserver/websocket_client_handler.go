@@ -1,6 +1,9 @@
 package apiserver
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/armantarkhanian/websocket"
 	"github.com/centrifugal/centrifuge"
 )
@@ -9,7 +12,33 @@ func (*APIServer) OnAlive(*websocket.Client) {}
 
 func (*APIServer) OnDisconect(*websocket.Client, centrifuge.DisconnectEvent) {}
 
-func (*APIServer) OnSubscribe(*websocket.Client, centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+func (app *APIServer) OnSubscribe(c *websocket.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+	if strings.HasPrefix(e.Channel, "user_") {
+		if e.Channel != "user_"+c.UserID() {
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
+		}
+	}
+
+	if strings.HasPrefix(e.Channel, "game_") {
+		gameID, err := strconv.ParseInt(e.Channel[5:], 10, 64)
+		if err != nil {
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorBadRequest
+		}
+		userID, err := strconv.ParseInt(c.UserID(), 10, 64)
+		if err != nil {
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorBadRequest
+		}
+
+		// Check if the user is a game member.
+		ok, err := app.db.IsGameMember(gameID, userID)
+		if err != nil {
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		}
+		if !ok {
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
+		}
+	}
+
 	return centrifuge.SubscribeReply{}, nil
 }
 

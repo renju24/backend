@@ -128,3 +128,12 @@ func (db *Database) CreateGame(blackUserID, whiteUserID int64) (*model.Game, err
 	}
 	return &game, nil
 }
+
+func (db *Database) IsGameMember(userID, gameID int64) (bool, error) {
+	var ok bool
+	query := `SELECT TRUE FROM games WHERE id = $1 AND (black_user_id = $2 OR white_user_id = $3)`
+	if err := db.pool.QueryRow(context.TODO(), query, gameID, userID, userID).Scan(&ok); err != nil {
+		return false, err
+	}
+	return ok, nil
+}

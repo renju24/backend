@@ -15,6 +15,9 @@ type Database interface {
 	// Create new game.
 	CreateGame(blackUserID, whiteUserID int64) (*model.Game, error)
 
+	// Is user a game member?
+	IsGameMember(userID, gameID int64) (bool, error)
+
 	// Close
 	Close() error
 }
