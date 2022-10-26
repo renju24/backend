@@ -4,7 +4,7 @@ import "fmt"
 
 type Error struct {
 	Code    int    `json:"code"`
-	Message string `json:"message"`
+	Message string `json:"description"`
 }
 
 func (e *Error) Error() string {
