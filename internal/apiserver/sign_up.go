@@ -23,8 +23,7 @@ type signupRequest struct {
 }
 
 type signupResponse struct {
-	Status int    `json:"status"`
-	Token  string `json:"token"`
+	Token string `json:"token"`
 }
 
 func signUp(api *APIServer) gin.HandlerFunc {
@@ -87,8 +86,7 @@ func signUp(api *APIServer) gin.HandlerFunc {
 		}
 
 		resp := signupResponse{
-			Status: 1,
-			Token:  jwtToken,
+			Token: jwtToken,
 		}
 
 		c.SetCookie(

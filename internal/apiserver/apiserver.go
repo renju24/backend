@@ -18,8 +18,7 @@ import (
 
 // APIError is the JSON-object that server will return when an error occurs.
 type APIError struct {
-	Status int             `json:"status"`
-	Error  *apierror.Error `json:"error"`
+	Error *apierror.Error `json:"error"`
 }
 
 // APIServer is the main object of programm.
