@@ -3,12 +3,12 @@ package apiserver
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/armantarkhanian/jwt"
 	"github.com/armantarkhanian/websocket"
 	"github.com/centrifugal/centrifuge"
-	"github.com/renju24/backend/apimodel"
 	"github.com/renju24/backend/internal/pkg/apierror"
 )
 
@@ -41,14 +41,19 @@ func (apiServer *APIServer) OnConnecting(_ *centrifuge.Node, e centrifuge.Connec
 		return nil, centrifuge.ConnectReply{}, centrifuge.DisconnectServerError
 	}
 
-	apiUser := apimodel.User{
+	type userData struct {
+		ID       int64  `json:"id"`
+		Username string `json:"username"`
+		Email    string `json:"email"`
+		Ranking  int    `json:"ranking"`
+	}
+
+	b, err := json.Marshal(&userData{
 		ID:       user.ID,
 		Username: user.Username,
 		Email:    user.Email,
 		Ranking:  user.Ranking,
-	}
-
-	b, err := json.Marshal(&apiUser)
+	})
 	if err != nil {
 		return nil, centrifuge.ConnectReply{}, centrifuge.DisconnectServerError
 	}
@@ -58,6 +63,12 @@ func (apiServer *APIServer) OnConnecting(_ *centrifuge.Node, e centrifuge.Connec
 	}
 
 	apiServer.logger.Info().Int64("user_id", userID).Msg("user connected successfully")
+
+	userIDString := fmt.Sprintf("%d", user.ID)
+
+	if err := apiServer.centrifugeNode.Subscribe(userIDString, "user_"+userIDString); err != nil {
+		return nil, centrifuge.ConnectReply{}, centrifuge.ErrorInternal
+	}
 
 	return &websocketSession, centrifuge.ConnectReply{Data: b}, nil
 }
