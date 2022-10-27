@@ -102,7 +102,8 @@ func (db *Database) GetUserByLogin(login string) (*model.User, error) {
 
 func (db *Database) GetUserByID(userID int64) (*model.User, error) {
 	var user model.User
-	err := db.pool.QueryRow(context.TODO(), "id, username, email, ranking, password_bcrypt FROM users WHERE id = $1", userID).Scan(
+	query := `SELECT id, username, email, ranking, password_bcrypt FROM users WHERE id = $1`
+	err := db.pool.QueryRow(context.TODO(), query, userID).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,

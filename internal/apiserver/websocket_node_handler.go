@@ -57,6 +57,8 @@ func (apiServer *APIServer) OnConnecting(_ *centrifuge.Node, e centrifuge.Connec
 		UserID: userID,
 	}
 
+	apiServer.logger.Info().Int64("user_id", userID).Msg("user connected successfully")
+
 	return &websocketSession, centrifuge.ConnectReply{Data: b}, nil
 }
 
