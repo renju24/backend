@@ -115,8 +115,8 @@ func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configRead
 
 	a.centrifugeNode = node
 
-	// GET /websocket
-	a.router.GET("/websocket", gin.WrapH(handler))
+	// GET /connection/websocket
+	a.router.GET("/connection/websocket", gin.WrapH(handler))
 
 	return a
 }
