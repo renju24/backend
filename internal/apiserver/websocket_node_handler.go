@@ -2,12 +2,14 @@ package apiserver
 
 import (
 	"encoding/json"
+	"errors"
 	"strconv"
 
 	"github.com/armantarkhanian/jwt"
 	"github.com/armantarkhanian/websocket"
 	"github.com/centrifugal/centrifuge"
 	"github.com/renju24/backend/apimodel"
+	"github.com/renju24/backend/internal/pkg/apierror"
 )
 
 func (*APIServer) OnSurvey(*centrifuge.Node, centrifuge.SurveyEvent) centrifuge.SurveyReply {
@@ -33,7 +35,10 @@ func (apiServer *APIServer) OnConnecting(_ *centrifuge.Node, e centrifuge.Connec
 
 	user, err := apiServer.db.GetUserByID(userID)
 	if err != nil {
-		return nil, centrifuge.ConnectReply{}, centrifuge.ErrorInternal
+		if errors.Is(err, apierror.ErrorUserNotFound) {
+			return nil, centrifuge.ConnectReply{}, centrifuge.DisconnectInvalidToken
+		}
+		return nil, centrifuge.ConnectReply{}, centrifuge.DisconnectServerError
 	}
 
 	apiUser := apimodel.User{
