@@ -11,7 +11,6 @@ import (
 	"github.com/armantarkhanian/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/renju24/backend/apimodel"
 	"github.com/renju24/backend/internal/pkg/apierror"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -24,9 +23,8 @@ type signupRequest struct {
 }
 
 type signupResponse struct {
-	Status int           `json:"status"`
-	Token  string        `json:"token"`
-	User   apimodel.User `json:"user"`
+	Status int    `json:"status"`
+	Token  string `json:"token"`
 }
 
 func signUp(api *APIServer) gin.HandlerFunc {
@@ -91,12 +89,6 @@ func signUp(api *APIServer) gin.HandlerFunc {
 		resp := signupResponse{
 			Status: 1,
 			Token:  jwtToken,
-			User: apimodel.User{
-				ID:       user.ID,
-				Username: user.Username,
-				Email:    user.Email,
-				Ranking:  user.Ranking,
-			},
 		}
 
 		c.SetCookie(

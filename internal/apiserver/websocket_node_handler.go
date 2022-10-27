@@ -33,36 +33,38 @@ func (apiServer *APIServer) OnConnecting(_ *centrifuge.Node, e centrifuge.Connec
 
 	user, err := apiServer.db.GetUserByID(userID)
 	if err != nil {
-		return nil, centrifuge.ConnectReply{}, centrifuge.DisconnectInvalidToken
+		return nil, centrifuge.ConnectReply{}, centrifuge.ErrorInternal
 	}
 
-	b, err := json.Marshal(&user)
+	apiUser := apimodel.User{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		Ranking:  user.Ranking,
+	}
+
+	b, err := json.Marshal(&apiUser)
 	if err != nil {
 		return nil, centrifuge.ConnectReply{}, centrifuge.DisconnectServerError
 	}
 
 	websocketSession := WebsocketSession{
-		User: apimodel.User{
-			ID:       user.ID,
-			Username: user.Username,
-			Email:    user.Email,
-			Ranking:  user.Ranking,
-		},
+		UserID: userID,
 	}
 
 	return &websocketSession, centrifuge.ConnectReply{Data: b}, nil
 }
 
 type WebsocketSession struct {
-	User apimodel.User
+	UserID int64 `json:"user_id"`
 }
 
 func (ws *WebsocketSession) Authorized() bool {
-	return ws.User.ID != 0
+	return ws.UserID != 0
 }
 
 func (ws *WebsocketSession) Credentials() *centrifuge.Credentials {
 	return &centrifuge.Credentials{
-		UserID: strconv.FormatInt(ws.User.ID, 10),
+		UserID: strconv.FormatInt(ws.UserID, 10),
 	}
 }

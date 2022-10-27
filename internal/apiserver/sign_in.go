@@ -8,7 +8,6 @@ import (
 	"github.com/armantarkhanian/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/renju24/backend/apimodel"
 	"github.com/renju24/backend/internal/pkg/apierror"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -19,9 +18,8 @@ type signinRequest struct {
 }
 
 type signinResponse struct {
-	Status int           `json:"status"`
-	Token  string        `json:"token"`
-	User   apimodel.User `json:"user"`
+	Status int    `json:"status"`
+	Token  string `json:"token"`
 }
 
 func signIn(api *APIServer) gin.HandlerFunc {
@@ -67,12 +65,6 @@ func signIn(api *APIServer) gin.HandlerFunc {
 		resp := signinResponse{
 			Status: 1,
 			Token:  jwtToken,
-			User: apimodel.User{
-				ID:       user.ID,
-				Username: user.Username,
-				Email:    user.Email,
-				Ranking:  user.Ranking,
-			},
 		}
 
 		c.SetCookie(
