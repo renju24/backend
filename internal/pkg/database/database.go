@@ -145,9 +145,6 @@ func (db *Database) FindUsers(username string) ([]*model.User, error) {
 	query := `SELECT id, username, email, ranking, password_bcrypt FROM users WHERE username ILIKE $1`
 	rows, err := db.pool.Query(context.TODO(), query, username)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, apierror.ErrorUserNotFound
-		}
 		return nil, err
 	}
 	defer rows.Close()

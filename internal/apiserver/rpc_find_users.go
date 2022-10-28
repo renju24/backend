@@ -2,12 +2,10 @@ package apiserver
 
 import (
 	"encoding/json"
-	"errors"
 	"strings"
 
 	"github.com/armantarkhanian/websocket"
 	"github.com/centrifugal/centrifuge"
-	"github.com/renju24/backend/internal/pkg/apierror"
 )
 
 type RPCFindUserRequest struct {
@@ -35,9 +33,6 @@ func (app *APIServer) FindUsers(c *websocket.Client, jsonData []byte) (*RPCFindU
 	}
 	users, err := app.db.FindUsers(req.Username)
 	if err != nil {
-		if errors.Is(err, apierror.ErrorUserNotFound) {
-			return nil, apierror.ErrorUserNotFound
-		}
 		app.logger.Error().Err(err).Send()
 		return nil, centrifuge.ErrorInternal
 	}
