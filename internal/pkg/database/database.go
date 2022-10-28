@@ -138,3 +138,27 @@ func (db *Database) IsGameMember(userID, gameID int64) (bool, error) {
 	}
 	return ok, nil
 }
+
+func (db *Database) FindUsers(username string) ([]*model.User, error) {
+	username = strings.Trim(username, "%")
+	username = "%" + username + "%"
+	query := `SELECT id, username, email, ranking, password_bcrypt FROM users WHERE username ILIKE $1`
+	rows, err := db.pool.Query(context.TODO(), query, username)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, apierror.ErrorUserNotFound
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*model.User
+	for rows.Next() {
+		var user model.User
+		if err = rows.Scan(&user.ID, &user.Username, &user.Email, &user.Ranking, &user.PasswordBcrypt); err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+	return users, err
+}

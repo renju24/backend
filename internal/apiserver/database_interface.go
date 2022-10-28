@@ -18,6 +18,9 @@ type Database interface {
 	// Is user a game member?
 	IsGameMember(userID, gameID int64) (bool, error)
 
+	// Find users by username.
+	FindUsers(username string) ([]*model.User, error)
+
 	// Close
 	Close() error
 }

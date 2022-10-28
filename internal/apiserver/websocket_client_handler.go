@@ -52,6 +52,8 @@ func (apiServer *APIServer) OnRPC(c *websocket.Client, rpc centrifuge.RPCEvent) 
 		response, err = apiServer.GetUserByID(c, rpc.Data)
 	case "get_user_by_username":
 		response, err = apiServer.GetUserByUsername(c, rpc.Data)
+	case "find_users":
+		response, err = apiServer.FindUsers(c, rpc.Data)
 	case "find_game":
 		response, err = apiServer.FindGame(c, rpc.Data)
 	case "create_game":
