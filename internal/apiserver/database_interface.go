@@ -21,6 +21,9 @@ type Database interface {
 	// Find users by username.
 	FindUsers(username string) ([]*model.User, error)
 
+	// Get game history by username.
+	GameHistory(username string) ([]model.GameHistoryItem, error)
+
 	// Close
 	Close() error
 }

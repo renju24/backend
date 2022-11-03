@@ -7,11 +7,7 @@ import (
 	"github.com/armantarkhanian/websocket"
 )
 
-type RPCGetUserByIDRequest struct {
-	UserID int64 `json:"user_id"`
-}
-
-type RPCGetUserByUsernameRequest struct {
+type RPCGetUserRequest struct {
 	Username string `json:"username"`
 }
 
@@ -22,29 +18,8 @@ type RPCGetUserResponse struct {
 	Ranking  int    `json:"ranking"`
 }
 
-func (apiServer *APIServer) GetUserByID(c *websocket.Client, jsonData []byte) (*RPCGetUserResponse, error) {
-	var req RPCGetUserByIDRequest
-	if err := json.Unmarshal(jsonData, &req); err != nil {
-		return nil, err
-	}
-	user, err := apiServer.db.GetUserByID(req.UserID)
-	if err != nil {
-		return nil, err
-	}
-	resp := RPCGetUserResponse{
-		ID:       user.ID,
-		Username: user.Username,
-		Email:    user.Email,
-		Ranking:  user.Ranking,
-	}
-	if strconv.FormatInt(user.ID, 10) != c.UserID() {
-		resp.Email = ""
-	}
-	return &resp, nil
-}
-
-func (apiServer *APIServer) GetUserByUsername(c *websocket.Client, jsonData []byte) (*RPCGetUserResponse, error) {
-	var req RPCGetUserByUsernameRequest
+func (apiServer *APIServer) GetUser(c *websocket.Client, jsonData []byte) (*RPCGetUserResponse, error) {
+	var req RPCGetUserRequest
 	if err := json.Unmarshal(jsonData, &req); err != nil {
 		return nil, err
 	}
