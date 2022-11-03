@@ -9,97 +9,97 @@ import (
 func TestGame(t *testing.T) {
 	testCases := []struct {
 		moves          []Move
-		expectedWinner int
+		expectedWinner Color
 		expectedError  error
 	}{
 		// Case when first move is not black.
 		{
 			moves: []Move{
-				NewMove(1, 5, 2),
+				NewMove(1, 5, White),
 			},
-			expectedWinner: 0,
+			expectedWinner: Nil,
 			expectedError:  ErrFirstMoveShouldBeBlack,
 		},
 		// Case when first move is not black.
 		{
 			moves: []Move{
-				NewMove(1, 2, 1),
+				NewMove(1, 2, Black),
 			},
-			expectedWinner: 0,
+			expectedWinner: Nil,
 			expectedError:  ErrFirstMoveShouldBeInCenter,
 		},
 		// Case when the X-coordinate is outside the board.
 		{
 			moves: []Move{
-				NewMove(7, 7, 1),
-				NewMove(-1, 5, 2),
+				NewMove(7, 7, Black),
+				NewMove(-1, 5, White),
 			},
-			expectedWinner: 0,
+			expectedWinner: Nil,
 			expectedError:  ErrCoordinatesOutside,
 		},
 		// Case when the Y-coordinate is outside the board.
 		{
 			moves: []Move{
-				NewMove(7, 7, 1),
-				NewMove(5, 15, 1),
+				NewMove(7, 7, Black),
+				NewMove(5, 15, Black),
 			},
-			expectedWinner: 0,
+			expectedWinner: Nil,
 			expectedError:  ErrCoordinatesOutside,
 		},
 		// Case when field is already taken.
 		{
 			moves: []Move{
-				NewMove(7, 7, 1),
-				NewMove(7, 7, 2),
+				NewMove(7, 7, Black),
+				NewMove(7, 7, White),
 			},
-			expectedWinner: 0,
+			expectedWinner: Nil,
 			expectedError:  ErrFieldAlreadyTaken,
 		},
 		// Case when the last move was made by same player.
 		{
 			moves: []Move{
-				NewMove(7, 7, 1),
-				NewMove(0, 0, 2),
-				NewMove(1, 0, 2),
+				NewMove(7, 7, Black),
+				NewMove(0, 0, White),
+				NewMove(1, 0, White),
 			},
-			expectedWinner: 0,
+			expectedWinner: Nil,
 			expectedError:  ErrInvalidTurn,
 		},
 		// Case when black should win.
 		{
 			moves: []Move{
-				NewMove(7, 7, 1),
-				NewMove(8, 8, 2),
-				NewMove(0, 0, 1),
-				NewMove(1, 0, 2),
-				NewMove(0, 1, 1),
-				NewMove(2, 0, 2),
-				NewMove(0, 2, 1),
-				NewMove(3, 0, 2),
-				NewMove(0, 3, 1),
-				NewMove(4, 0, 2),
-				NewMove(0, 4, 1),
+				NewMove(7, 7, Black),
+				NewMove(8, 8, White),
+				NewMove(0, 0, Black),
+				NewMove(1, 0, White),
+				NewMove(0, 1, Black),
+				NewMove(2, 0, White),
+				NewMove(0, 2, Black),
+				NewMove(3, 0, White),
+				NewMove(0, 3, Black),
+				NewMove(4, 0, White),
+				NewMove(0, 4, Black),
 			},
-			expectedWinner: 1,
+			expectedWinner: Black,
 			expectedError:  nil,
 		},
 		// Case when white should win.
 		{
 			moves: []Move{
-				NewMove(7, 7, 1),
-				NewMove(8, 8, 2),
-				NewMove(0, 0, 1),
-				NewMove(1, 0, 2),
-				NewMove(0, 1, 1),
-				NewMove(2, 0, 2),
-				NewMove(0, 2, 1),
-				NewMove(3, 0, 2),
-				NewMove(0, 3, 1),
-				NewMove(4, 0, 2),
-				NewMove(0, 5, 1),
-				NewMove(5, 0, 2),
+				NewMove(7, 7, Black),
+				NewMove(8, 8, White),
+				NewMove(0, 0, Black),
+				NewMove(1, 0, White),
+				NewMove(0, 1, Black),
+				NewMove(2, 0, White),
+				NewMove(0, 2, Black),
+				NewMove(3, 0, White),
+				NewMove(0, 3, Black),
+				NewMove(4, 0, White),
+				NewMove(0, 5, Black),
+				NewMove(5, 0, White),
 			},
-			expectedWinner: 2,
+			expectedWinner: White,
 			expectedError:  nil,
 		},
 	}
@@ -111,7 +111,7 @@ func TestGame(t *testing.T) {
 				require.Equal(t, testCase.expectedWinner, actualWinner)
 				require.ErrorIs(t, testCase.expectedError, actualErr)
 			} else {
-				require.Equal(t, 0, actualWinner)
+				require.Equal(t, Nil, actualWinner)
 				require.NoError(t, actualErr)
 			}
 		}

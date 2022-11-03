@@ -8,23 +8,31 @@ const BoardSize = 15
 
 // Move structure.
 type Move struct {
-	x    int // X-coordinate.
-	y    int // Y-coordinate.
-	user int // User: 1 or 2 (black or white).
+	x     int   // X-coordinate.
+	y     int   // Y-coordinate.
+	color Color // color.
 }
 
-func NewMove(x, y, user int) Move {
+type Color int
+
+const (
+	Nil   Color = 0
+	Black Color = 1
+	White Color = 2
+)
+
+func NewMove(x, y int, color Color) Move {
 	return Move{
-		x:    x,
-		y:    y,
-		user: user,
+		x:     x,
+		y:     y,
+		color: color,
 	}
 }
 
 // Game structure.
 type Game struct {
-	board    [BoardSize * BoardSize]int // Board 15x15.
-	lastMove Move                       // The last move.
+	board    [BoardSize * BoardSize]Color // Board 15x15.
+	lastMove Move                         // The last move.
 }
 
 func NewGame() *Game {
@@ -39,10 +47,10 @@ var (
 	ErrInvalidTurn               = errors.New("invalid turn")
 )
 
-func (g *Game) ApplyMove(move Move) (winner int, err error) {
+func (g *Game) ApplyMove(move Move) (winner Color, err error) {
 	// If it's the first move, then user should be black and move should be in board's center.
-	if g.lastMove.user == 0 {
-		if move.user != 1 {
+	if g.lastMove.color == 0 {
+		if move.color != 1 {
 			return 0, ErrFirstMoveShouldBeBlack
 		}
 		if move.x != 7 || move.y != 7 {
@@ -58,17 +66,17 @@ func (g *Game) ApplyMove(move Move) (winner int, err error) {
 		return 0, ErrFieldAlreadyTaken
 	}
 	// Check the last move was made by another player.
-	if g.lastMove.user == move.user {
+	if g.lastMove.color == move.color {
 		return 0, ErrInvalidTurn
 	}
 
 	// Apply the move and change the board.
-	g.board[move.x*BoardSize+move.y] = move.user
+	g.board[move.x*BoardSize+move.y] = move.color
 	g.lastMove = move
 
 	// After a successful move, we should check if there is a winner.
 	if g.hasWinner() {
-		return g.lastMove.user, nil
+		return g.lastMove.color, nil
 	}
 
 	return 0, nil
@@ -78,7 +86,7 @@ func (game *Game) hasWinner() bool {
 	var xcount, ycount, zcount int
 	x, y := game.lastMove.x, game.lastMove.y
 	x2, y2 := game.lastMove.x, game.lastMove.y
-	if game.lastMove.user == 0 {
+	if game.lastMove.color == 0 {
 		return false
 	}
 	for i := 0; i < BoardSize; i++ {
@@ -86,7 +94,7 @@ func (game *Game) hasWinner() bool {
 		if xcount == 5 {
 			return true
 		}
-		if game.board[x*BoardSize+i] == game.lastMove.user {
+		if game.board[x*BoardSize+i] == game.lastMove.color {
 			xcount++
 		} else {
 			xcount = 0
@@ -95,7 +103,7 @@ func (game *Game) hasWinner() bool {
 		if ycount == 5 {
 			return true
 		}
-		if game.board[i*BoardSize+y] == game.lastMove.user {
+		if game.board[i*BoardSize+y] == game.lastMove.color {
 			ycount++
 		} else {
 			ycount = 0
@@ -110,7 +118,7 @@ func (game *Game) hasWinner() bool {
 		if zcount == 5 {
 			return true
 		}
-		if game.board[x2*BoardSize+y2] == game.lastMove.user {
+		if game.board[x2*BoardSize+y2] == game.lastMove.color {
 			zcount++
 		} else {
 			zcount = 0
@@ -128,7 +136,7 @@ func (game *Game) hasWinner() bool {
 		if zcount == 5 {
 			return true
 		}
-		if game.board[x*BoardSize+y] == game.lastMove.user {
+		if game.board[x*BoardSize+y] == game.lastMove.color {
 			zcount++
 		} else {
 			zcount = 0
