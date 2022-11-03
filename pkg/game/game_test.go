@@ -12,10 +12,27 @@ func TestGame(t *testing.T) {
 		expectedWinner int
 		expectedError  error
 	}{
+		// Case when first move is not black.
+		{
+			moves: []Move{
+				NewMove(1, 5, 2),
+			},
+			expectedWinner: 0,
+			expectedError:  ErrFirstMoveShouldBeBlack,
+		},
+		// Case when first move is not black.
+		{
+			moves: []Move{
+				NewMove(1, 2, 1),
+			},
+			expectedWinner: 0,
+			expectedError:  ErrFirstMoveShouldBeInCenter,
+		},
 		// Case when the X-coordinate is outside the board.
 		{
 			moves: []Move{
-				NewMove(-1, 5, 1),
+				NewMove(7, 7, 1),
+				NewMove(-1, 5, 2),
 			},
 			expectedWinner: 0,
 			expectedError:  ErrCoordinatesOutside,
@@ -23,6 +40,7 @@ func TestGame(t *testing.T) {
 		// Case when the Y-coordinate is outside the board.
 		{
 			moves: []Move{
+				NewMove(7, 7, 1),
 				NewMove(5, 15, 1),
 			},
 			expectedWinner: 0,
@@ -31,8 +49,8 @@ func TestGame(t *testing.T) {
 		// Case when field is already taken.
 		{
 			moves: []Move{
-				NewMove(0, 0, 1),
-				NewMove(0, 0, 2),
+				NewMove(7, 7, 1),
+				NewMove(7, 7, 2),
 			},
 			expectedWinner: 0,
 			expectedError:  ErrFieldAlreadyTaken,
@@ -40,8 +58,9 @@ func TestGame(t *testing.T) {
 		// Case when the last move was made by same player.
 		{
 			moves: []Move{
-				NewMove(0, 0, 1),
-				NewMove(1, 0, 1),
+				NewMove(7, 7, 1),
+				NewMove(0, 0, 2),
+				NewMove(1, 0, 2),
 			},
 			expectedWinner: 0,
 			expectedError:  ErrInvalidTurn,
@@ -49,6 +68,8 @@ func TestGame(t *testing.T) {
 		// Case when black should win.
 		{
 			moves: []Move{
+				NewMove(7, 7, 1),
+				NewMove(8, 8, 2),
 				NewMove(0, 0, 1),
 				NewMove(1, 0, 2),
 				NewMove(0, 1, 1),
@@ -65,6 +86,8 @@ func TestGame(t *testing.T) {
 		// Case when white should win.
 		{
 			moves: []Move{
+				NewMove(7, 7, 1),
+				NewMove(8, 8, 2),
 				NewMove(0, 0, 1),
 				NewMove(1, 0, 2),
 				NewMove(0, 1, 1),

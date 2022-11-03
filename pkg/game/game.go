@@ -32,12 +32,23 @@ func NewGame() *Game {
 }
 
 var (
-	ErrCoordinatesOutside = errors.New("coordinates outside the board")
-	ErrFieldAlreadyTaken  = errors.New("field is already taken")
-	ErrInvalidTurn        = errors.New("invalid turn")
+	ErrFirstMoveShouldBeBlack    = errors.New("first move should be made by black user")
+	ErrFirstMoveShouldBeInCenter = errors.New("first move should be in board's center")
+	ErrCoordinatesOutside        = errors.New("coordinates outside the board")
+	ErrFieldAlreadyTaken         = errors.New("field is already taken")
+	ErrInvalidTurn               = errors.New("invalid turn")
 )
 
 func (g *Game) ApplyMove(move Move) (winner int, err error) {
+	// If it's the first move, then user should be black and move should be in board's center.
+	if g.lastMove.user == 0 {
+		if move.user != 1 {
+			return 0, ErrFirstMoveShouldBeBlack
+		}
+		if move.x != 7 || move.y != 7 {
+			return 0, ErrFirstMoveShouldBeInCenter
+		}
+	}
 	// Check the coordinates are not outside the board.
 	if move.x >= BoardSize || move.x < 0 || move.y >= BoardSize || move.y < 0 {
 		return 0, ErrCoordinatesOutside
