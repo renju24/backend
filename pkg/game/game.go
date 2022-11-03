@@ -51,23 +51,23 @@ func (g *Game) ApplyMove(move Move) (winner Color, err error) {
 	// If it's the first move, then user should be black and move should be in board's center.
 	if g.lastMove.color == Nil {
 		if move.color != Black {
-			return 0, ErrFirstMoveShouldBeBlack
+			return Nil, ErrFirstMoveShouldBeBlack
 		}
 		if move.x != 7 || move.y != 7 {
-			return 0, ErrFirstMoveShouldBeInCenter
+			return Nil, ErrFirstMoveShouldBeInCenter
 		}
 	}
 	// Check the coordinates are not outside the board.
 	if move.x >= BoardSize || move.x < 0 || move.y >= BoardSize || move.y < 0 {
-		return 0, ErrCoordinatesOutside
+		return Nil, ErrCoordinatesOutside
 	}
 	// Check the field is not already taken.
 	if g.board[move.x*BoardSize+move.y] != Nil {
-		return 0, ErrFieldAlreadyTaken
+		return Nil, ErrFieldAlreadyTaken
 	}
 	// Check the last move was made by another player.
 	if g.lastMove.color == move.color {
-		return 0, ErrInvalidTurn
+		return Nil, ErrInvalidTurn
 	}
 
 	// Apply the move and change the board.
@@ -79,7 +79,7 @@ func (g *Game) ApplyMove(move Move) (winner Color, err error) {
 		return g.lastMove.color, nil
 	}
 
-	return 0, nil
+	return Nil, nil
 }
 
 func (game *Game) hasWinner() bool {
