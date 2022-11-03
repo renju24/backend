@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"encoding/json"
+	"strconv"
 
 	"github.com/armantarkhanian/websocket"
 )
@@ -17,6 +18,7 @@ type RPCGetUserByUsernameRequest struct {
 type RPCGetUserResponse struct {
 	ID       int64  `json:"id"`
 	Username string `json:"username"`
+	Email    string `json:"email,omitempty"`
 	Ranking  int    `json:"ranking"`
 }
 
@@ -29,11 +31,16 @@ func (apiServer *APIServer) GetUserByID(c *websocket.Client, jsonData []byte) (*
 	if err != nil {
 		return nil, err
 	}
-	return &RPCGetUserResponse{
+	resp := RPCGetUserResponse{
 		ID:       user.ID,
 		Username: user.Username,
+		Email:    user.Email,
 		Ranking:  user.Ranking,
-	}, nil
+	}
+	if strconv.FormatInt(user.ID, 10) != c.UserID() {
+		resp.Email = ""
+	}
+	return &resp, nil
 }
 
 func (apiServer *APIServer) GetUserByUsername(c *websocket.Client, jsonData []byte) (*RPCGetUserResponse, error) {
@@ -45,9 +52,14 @@ func (apiServer *APIServer) GetUserByUsername(c *websocket.Client, jsonData []by
 	if err != nil {
 		return nil, err
 	}
-	return &RPCGetUserResponse{
+	resp := RPCGetUserResponse{
 		ID:       user.ID,
 		Username: user.Username,
+		Email:    user.Email,
 		Ranking:  user.Ranking,
-	}, nil
+	}
+	if strconv.FormatInt(user.ID, 10) != c.UserID() {
+		resp.Email = ""
+	}
+	return &resp, nil
 }
