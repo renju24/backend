@@ -159,3 +159,34 @@ func (db *Database) FindUsers(username string) ([]*model.User, error) {
 	}
 	return users, err
 }
+
+func (db *Database) GameHistory(username string) ([]model.GameHistoryItem, error) {
+	query := `
+		SELECT
+			g.id,
+			black.username as black_username,
+			white.username as white_username,
+			winner.username as winner
+		FROM
+			games g
+			INNER JOIN users black ON g.black_user_id = black.id
+			INNER JOIN users white ON g.white_user_id = white.id
+			LEFT  JOIN users winner ON g.winner_id = winner.id
+		WHERE
+			g.finished_at IS NOT NULL
+			AND (black.username = $1 OR white.username = $1);`
+	rows, err := db.pool.Query(context.TODO(), query, username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var games []model.GameHistoryItem
+	for rows.Next() {
+		var game model.GameHistoryItem
+		if err = rows.Scan(&game.ID, &game.BlackUsername, &game.WhiteUsername, &game.WinnerUsername); err != nil {
+			return nil, err
+		}
+		games = append(games, game)
+	}
+	return games, err
+}

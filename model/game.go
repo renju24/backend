@@ -10,3 +10,10 @@ type Game struct {
 	StartedAt   time.Time  `json:"started_at"`
 	FinishedAt  *time.Time `json:"finished_at"`
 }
+
+type GameHistoryItem struct {
+	ID             int64   `json:"id"`
+	BlackUsername  string  `json:"black_username"`
+	WhiteUsername  string  `json:"white_username"`
+	WinnerUsername *string `json:"winner_username"`
+}

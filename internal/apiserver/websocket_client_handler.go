@@ -48,10 +48,8 @@ func (apiServer *APIServer) OnRPC(c *websocket.Client, rpc centrifuge.RPCEvent) 
 	var err error
 
 	switch rpc.Method {
-	case "get_user_by_id":
-		response, err = apiServer.GetUserByID(c, rpc.Data)
-	case "get_user_by_username":
-		response, err = apiServer.GetUserByUsername(c, rpc.Data)
+	case "get_user":
+		response, err = apiServer.GetUser(c, rpc.Data)
 	case "find_users":
 		response, err = apiServer.FindUsers(c, rpc.Data)
 	case "find_game":
@@ -62,6 +60,8 @@ func (apiServer *APIServer) OnRPC(c *websocket.Client, rpc centrifuge.RPCEvent) 
 		response, err = apiServer.JoinGame(c, rpc.Data)
 	case "left_game":
 		response, err = apiServer.LeftGame(c, rpc.Data)
+	case "game_history":
+		response, err = apiServer.GameHistory(c, rpc.Data)
 	default:
 		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
 	}
