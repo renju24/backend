@@ -62,7 +62,7 @@ func (g *Game) ApplyMove(move Move) (winner Color, err error) {
 		return 0, ErrCoordinatesOutside
 	}
 	// Check the field is not already taken.
-	if g.board[move.x*BoardSize+move.y] != 0 {
+	if g.board[move.x*BoardSize+move.y] != Nil {
 		return 0, ErrFieldAlreadyTaken
 	}
 	// Check the last move was made by another player.
