@@ -49,8 +49,8 @@ var (
 
 func (g *Game) ApplyMove(move Move) (winner Color, err error) {
 	// If it's the first move, then user should be black and move should be in board's center.
-	if g.lastMove.color == 0 {
-		if move.color != 1 {
+	if g.lastMove.color == Nil {
+		if move.color != Black {
 			return 0, ErrFirstMoveShouldBeBlack
 		}
 		if move.x != 7 || move.y != 7 {
@@ -86,7 +86,7 @@ func (game *Game) hasWinner() bool {
 	var xcount, ycount, zcount int
 	x, y := game.lastMove.x, game.lastMove.y
 	x2, y2 := game.lastMove.x, game.lastMove.y
-	if game.lastMove.color == 0 {
+	if game.lastMove.color == Nil {
 		return false
 	}
 	for i := 0; i < BoardSize; i++ {
