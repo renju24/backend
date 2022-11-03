@@ -46,22 +46,13 @@ func (app *APIServer) OnSubscribe(c *websocket.Client, e centrifuge.SubscribeEve
 func (apiServer *APIServer) OnRPC(c *websocket.Client, rpc centrifuge.RPCEvent) (centrifuge.RPCReply, error) {
 	var response any
 	var err error
-
 	switch rpc.Method {
 	case "get_user":
 		response, err = apiServer.GetUser(c, rpc.Data)
-	case "find_users":
-		response, err = apiServer.FindUsers(c, rpc.Data)
-	case "find_game":
-		response, err = apiServer.FindGame(c, rpc.Data)
-	case "create_game":
-		response, err = apiServer.CreateGame(c, rpc.Data)
-	case "join_game":
-		response, err = apiServer.JoinGame(c, rpc.Data)
-	case "left_game":
-		response, err = apiServer.LeftGame(c, rpc.Data)
 	case "game_history":
 		response, err = apiServer.GameHistory(c, rpc.Data)
+	case "find_users":
+		response, err = apiServer.FindUsers(c, rpc.Data)
 	default:
 		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
 	}
