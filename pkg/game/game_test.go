@@ -20,7 +20,7 @@ func TestGame(t *testing.T) {
 			expectedWinner: Nil,
 			expectedError:  ErrFirstMoveShouldBeBlack,
 		},
-		// Case when first move is not black.
+		// Case when first move is not in center.
 		{
 			moves: []Move{
 				NewMove(1, 2, Black),
