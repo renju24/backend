@@ -2,50 +2,38 @@ package apiserver
 
 import (
 	"encoding/json"
+	"time"
+
+	"github.com/centrifugal/centrifuge"
 )
 
-type EventType string
-
-const (
-	UserJoinGame EventType = "user_join_game"
-	UserLeftGame EventType = "user_left_game"
-)
-
-type Event struct {
-	EventType EventType `json:"event_type"`
-	Data      any       `json:"data"`
+type Event interface {
+	EventType() string
 }
 
-type (
-	EventJoinGame struct {
-		UserID int64 `json:"user_id"`
-		GameID int64 `json:"game_id"`
+func (apiServer *APIServer) PublishEvent(channel string, event Event) (centrifuge.PublishResult, error) {
+	if event == nil {
+		return centrifuge.PublishResult{}, nil
 	}
-	EventLeftGame struct {
-		UserID int64 `json:"user_id"`
-		GameID int64 `json:"game_id"`
+	msg, err := json.Marshal(map[string]any{
+		"event_type": event.EventType(),
+		"data":       event,
+	})
+	if err != nil {
+		return centrifuge.PublishResult{}, err
 	}
-)
+	res, err := apiServer.centrifugeNode.Publish(channel, msg)
+	if err != nil {
+		return centrifuge.PublishResult{}, err
+	}
+	return res, nil
+}
 
-func (apiServer *APIServer) PublishEvent(channel string, event Event) {
-	switch event.EventType {
-	case UserJoinGame:
-		if _, ok := event.Data.(*EventJoinGame); !ok {
-			return
-		}
-	case UserLeftGame:
-		if _, ok := event.Data.(*EventLeftGame); !ok {
-			return
-		}
-	}
-	msg, err := json.Marshal(event)
-	if err != nil {
-		apiServer.logger.Error().Err(err).Send()
-		return
-	}
-	_, err = apiServer.centrifugeNode.Publish(channel, msg)
-	if err != nil {
-		apiServer.logger.Error().Err(err).Send()
-		return
-	}
+type EventGameInvitation struct {
+	Inviter   string    `json:"inviter"`
+	InvitedAt time.Time `json:"invited_at"`
+}
+
+func (e *EventGameInvitation) EventType() string {
+	return "game_invitation"
 }
