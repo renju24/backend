@@ -34,11 +34,19 @@ type Config struct {
 	} `json:"oauth2"`
 }
 
+type Platform string
+
+const (
+	Web     Platform = "web"
+	Android Platform = "android"
+	IOS     Platform = "ios"
+)
+
 type OauthService string
 
 const (
-	OauthGoogle OauthService = "Google"
-	OauthYandex OauthService = "Yandex"
+	Google OauthService = "google"
+	Yandex OauthService = "yandex"
 )
 
 type OauthConfig struct {

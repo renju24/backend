@@ -88,9 +88,9 @@ func (db *Database) CreateUser(username, email, passwordBcrypt string) (*model.U
 
 func (db *Database) CreateUserOauth(username, email, oauthID string, oauthSerivce config.OauthService) (*model.User, error) {
 	switch oauthSerivce {
-	case config.OauthGoogle:
+	case config.Google:
 		return db.createGoogleUser(username, email, oauthID, 0)
-	case config.OauthYandex:
+	case config.Yandex:
 		return db.createYandexUser(username, email, oauthID, 0)
 	}
 	return nil, errors.New("invalid oauth service")
