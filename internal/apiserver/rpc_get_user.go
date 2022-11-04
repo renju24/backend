@@ -21,18 +21,30 @@ type RPCGetUserResponse struct {
 	Ranking  int    `json:"ranking"`
 }
 
-func (apiServer *APIServer) GetUser(c *websocket.Client, jsonData []byte) (*RPCGetUserResponse, *apierror.Error, *centrifuge.Error) {
+func (apiServer *APIServer) GetUser(c *websocket.Client, jsonData []byte) (*RPCGetUserResponse, *centrifuge.Error) {
 	var req RPCGetUserRequest
 	if err := json.Unmarshal(jsonData, &req); err != nil {
-		return nil, apierror.ErrorInvalidBody, centrifuge.ErrorBadRequest
+		return nil, &centrifuge.Error{
+			Code:      uint32(apierror.ErrorInvalidBody.Code),
+			Message:   apierror.ErrorInvalidBody.Message,
+			Temporary: false,
+		}
 	}
 	user, err := apiServer.db.GetUserByLogin(req.Username)
 	if err != nil {
 		if errors.Is(err, apierror.ErrorUserNotFound) {
-			return nil, apierror.ErrorUserNotFound, centrifuge.ErrorBadRequest
+			return nil, &centrifuge.Error{
+				Code:      uint32(apierror.ErrorUserNotFound.Code),
+				Message:   apierror.ErrorUserNotFound.Message,
+				Temporary: false,
+			}
 		}
 		apiServer.logger.Error().Err(err).Send()
-		return nil, apierror.ErrorInternal, centrifuge.ErrorInternal
+		return nil, &centrifuge.Error{
+			Code:      uint32(apierror.ErrorInternal.Code),
+			Message:   apierror.ErrorInternal.Message,
+			Temporary: false,
+		}
 	}
 	resp := RPCGetUserResponse{
 		ID:       user.ID,
@@ -43,5 +55,5 @@ func (apiServer *APIServer) GetUser(c *websocket.Client, jsonData []byte) (*RPCG
 	if strconv.FormatInt(user.ID, 10) != c.UserID() {
 		resp.Email = ""
 	}
-	return &resp, nil, nil
+	return &resp, nil
 }

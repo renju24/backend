@@ -36,12 +36,6 @@ func signUp(api *APIServer) gin.HandlerFunc {
 			return
 		}
 		if err := req.Validate(); err != nil {
-			if apiErr, ok := err.(*apierror.Error); ok {
-				c.JSON(http.StatusBadRequest, &APIError{
-					Error: apiErr,
-				})
-				return
-			}
 			c.JSON(http.StatusBadRequest, &APIError{
 				Error: apierror.ErrorInvalidBody,
 			})
@@ -151,7 +145,7 @@ func (req *signupRequest) Validate() error {
 	}
 
 	if !hasLetter {
-		return apierror.ErrorMissingUpperInPassword
+		return apierror.ErrorMissingLetterInPassword
 	}
 	if !hasDigit {
 		return apierror.ErrorMissingDigitInPassword

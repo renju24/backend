@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -11,14 +12,48 @@ import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
-	"github.com/renju24/backend/internal/pkg/apierror"
 	"github.com/renju24/backend/internal/pkg/config"
 	"github.com/rs/zerolog"
 )
 
 // APIError is the JSON-object that server will return when an error occurs.
 type APIError struct {
-	Error *apierror.Error `json:"error"`
+	Error *centrifuge.Error `json:"error"`
+}
+
+type apiErrorJSON struct {
+	Error errorJSON `json:"error"`
+}
+
+type errorJSON struct {
+	Code      uint32 `json:"code"`
+	Message   string `json:"message"`
+	Temporary bool   `json:"temporary"`
+}
+
+// MarshalJSON ...
+func (e *APIError) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&apiErrorJSON{
+		Error: errorJSON{
+			Code:      e.Error.Code,
+			Message:   e.Error.Message,
+			Temporary: e.Error.Temporary,
+		},
+	})
+}
+
+// MarshalJSON ...
+func (e *APIError) UnmarshalJSON(data []byte) error {
+	var apiErrorJSON apiErrorJSON
+	if err := json.Unmarshal(data, &apiErrorJSON); err != nil {
+		return err
+	}
+	e.Error = &centrifuge.Error{
+		Code:      apiErrorJSON.Error.Code,
+		Message:   apiErrorJSON.Error.Message,
+		Temporary: apiErrorJSON.Error.Temporary,
+	}
+	return nil
 }
 
 // APIServer is the main object of programm.

@@ -1,43 +1,28 @@
 package apierror
 
-import "fmt"
-
-type Error struct {
-	Code    int    `json:"code"`
-	Message string `json:"description"`
-}
-
-func (e *Error) Error() string {
-	return fmt.Sprintf("%d: %s", e.Code, e.Message)
-}
-
-var (
-	ErrorInvalidBody        = &Error{100, "invalid JSON body"}
-	ErrorInternal           = &Error{101, "internal server error"}
-	ErrorInvalidCredentials = &Error{103, "invalid credentials"}
-	ErrorUnauthorized       = &Error{104, "invalid token"}
-	ErrorUserNotFound       = &Error{105, "user not found"}
+import (
+	"github.com/centrifugal/centrifuge"
 )
 
 var (
-	ErrorUsernameIsRequired         = &Error{200, "username is required"}
-	ErrorUsernameIsTaken            = &Error{201, "username is already taken"}
-	ErrorEmailIsRequired            = &Error{202, "email is required"}
-	ErrorEmailIsTaken               = &Error{203, "email is already taken"}
-	ErrorPasswordIsRequired         = &Error{204, "password is required"}
-	ErrorRepeatedPasswordIsRequired = &Error{205, "repeated_password is required"}
-
-	ErrorInvalidUsernameLength    = &Error{206, "invalid username length"}
-	ErrorInvalidEmail             = &Error{207, "invalid email"}
-	ErrorInvalidEmailLength       = &Error{208, "invalid email length"}
-	ErrorInvalidPasswordLength    = &Error{209, "invalid password length"}
-	ErrorInvalidPasswordCharacter = &Error{210, "invalid password character"}
-
-	ErrorMissingLetterInPassword = &Error{211, "missing letter character"}
-	ErrorMissingUpperInPassword  = &Error{212, "missing upper character"}
-	ErrorMissingLowerInPassword  = &Error{213, "missing lower character"}
-	ErrorMissingDigitInPassword  = &Error{214, "missing digit character"}
-	ErrorPasswordsNotEqual       = &Error{215, "passwords are not equal"}
+	ErrorInvalidBody                = &centrifuge.Error{400, "invalid JSON body", false}
+	ErrorInternal                   = &centrifuge.Error{401, "internal server error", true}
+	ErrorInvalidCredentials         = &centrifuge.Error{402, "invalid credentials", false}
+	ErrorUnauthorized               = &centrifuge.Error{403, "invalid token", false}
+	ErrorUserNotFound               = &centrifuge.Error{404, "user not found", false}
+	ErrorUsernameIsRequired         = &centrifuge.Error{405, "username is required", false}
+	ErrorUsernameIsTaken            = &centrifuge.Error{406, "username is already taken", false}
+	ErrorEmailIsRequired            = &centrifuge.Error{407, "email is required", false}
+	ErrorEmailIsTaken               = &centrifuge.Error{408, "email is already taken", false}
+	ErrorPasswordIsRequired         = &centrifuge.Error{409, "password is required", false}
+	ErrorRepeatedPasswordIsRequired = &centrifuge.Error{410, "repeated_password is required", false}
+	ErrorInvalidUsernameLength      = &centrifuge.Error{411, "invalid username length", false}
+	ErrorInvalidEmail               = &centrifuge.Error{412, "invalid email", false}
+	ErrorInvalidEmailLength         = &centrifuge.Error{413, "invalid email length", false}
+	ErrorInvalidPasswordLength      = &centrifuge.Error{414, "invalid password length", false}
+	ErrorInvalidPasswordCharacter   = &centrifuge.Error{415, "invalid password character", false}
+	ErrorMissingLetterInPassword    = &centrifuge.Error{416, "missing letter character", false}
+	ErrorMissingDigitInPassword     = &centrifuge.Error{417, "missing digit character", false}
+	ErrorPasswordsNotEqual          = &centrifuge.Error{418, "passwords are not equal", false}
+	ErrorCallingYourselfForGame     = &centrifuge.Error{419, "can't call yourself for a game", false}
 )
-
-var ErrorCallingYourselfForGame = &Error{216, "can't call yourself for a game"}

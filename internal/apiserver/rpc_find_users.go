@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/armantarkhanian/websocket"
-	"github.com/centrifugal/centrifuge"
 	"github.com/renju24/backend/internal/pkg/apierror"
 )
 
@@ -23,19 +22,19 @@ type findUser struct {
 	Ranking  int    `json:"ranking"`
 }
 
-func (app *APIServer) FindUsers(c *websocket.Client, jsonData []byte) (*RPCFindUserResponse, *apierror.Error, *centrifuge.Error) {
+func (app *APIServer) FindUsers(c *websocket.Client, jsonData []byte) (*RPCFindUserResponse, error) {
 	var req RPCFindUserRequest
 	if err := json.Unmarshal(jsonData, &req); err != nil {
-		return nil, apierror.ErrorInvalidBody, centrifuge.ErrorBadRequest
+		return nil, apierror.ErrorInvalidBody
 	}
 	req.Username = strings.TrimSpace(req.Username)
 	if req.Username == "" {
-		return nil, apierror.ErrorUsernameIsRequired, centrifuge.ErrorBadRequest
+		return nil, apierror.ErrorUsernameIsRequired
 	}
 	users, err := app.db.FindUsers(req.Username)
 	if err != nil {
 		app.logger.Error().Err(err).Send()
-		return nil, apierror.ErrorInternal, centrifuge.ErrorInternal
+		return nil, apierror.ErrorInternal
 	}
 	var response RPCFindUserResponse
 	for _, user := range users {
@@ -45,5 +44,5 @@ func (app *APIServer) FindUsers(c *websocket.Client, jsonData []byte) (*RPCFindU
 			Ranking:  user.Ranking,
 		})
 	}
-	return &response, nil, nil
+	return &response, nil
 }
