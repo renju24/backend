@@ -24,6 +24,9 @@ type Database interface {
 	// Get game history by username.
 	GameHistory(username string) ([]model.GameHistoryItem, error)
 
+	// Top10 return the top 10 users by ranking.
+	Top10() ([]*model.User, error)
+
 	// Close
 	Close() error
 }

@@ -190,3 +190,20 @@ func (db *Database) GameHistory(username string) ([]model.GameHistoryItem, error
 	}
 	return games, err
 }
+
+func (db *Database) Top10() ([]*model.User, error) {
+	rows, err := db.pool.Query(context.TODO(), `SELECT id, username, ranking FROM users ORDER BY ranking DESC LIMIT 10`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var users []*model.User
+	for rows.Next() {
+		var user model.User
+		if err = rows.Scan(&user.ID, &user.Username, &user.Ranking); err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+	return users, err
+}
