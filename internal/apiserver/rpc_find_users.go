@@ -25,7 +25,7 @@ type findUser struct {
 func (app *APIServer) FindUsers(c *websocket.Client, jsonData []byte) (*RPCFindUserResponse, error) {
 	var req RPCFindUserRequest
 	if err := json.Unmarshal(jsonData, &req); err != nil {
-		return nil, apierror.ErrorInvalidBody
+		return nil, apierror.ErrorBadRequest
 	}
 	req.Username = strings.TrimSpace(req.Username)
 	if req.Username == "" {

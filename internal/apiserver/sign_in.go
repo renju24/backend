@@ -26,7 +26,7 @@ func signIn(api *APIServer) gin.HandlerFunc {
 		var req signinRequest
 		if err := c.ShouldBindWith(&req, binding.JSON); err != nil {
 			c.JSON(http.StatusBadRequest, &APIError{
-				Error: apierror.ErrorInvalidBody,
+				Error: apierror.ErrorBadRequest,
 			})
 			return
 		}

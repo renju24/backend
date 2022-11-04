@@ -23,7 +23,7 @@ type RPCCallForGameResponse struct {
 func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*RPCCallForGameResponse, error) {
 	var req RPCCallForGameRequest
 	if err := json.Unmarshal(jsonData, &req); err != nil {
-		return nil, apierror.ErrorInvalidBody
+		return nil, apierror.ErrorBadRequest
 	}
 	req.Username = strings.TrimSpace(req.Username)
 	if req.Username == "" {

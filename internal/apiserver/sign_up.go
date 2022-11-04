@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/armantarkhanian/jwt"
+	"github.com/centrifugal/centrifuge"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/renju24/backend/internal/pkg/apierror"
@@ -31,13 +32,13 @@ func signUp(api *APIServer) gin.HandlerFunc {
 		var req signupRequest
 		if err := c.ShouldBindWith(&req, binding.JSON); err != nil {
 			c.JSON(http.StatusBadRequest, &APIError{
-				Error: apierror.ErrorInvalidBody,
+				Error: apierror.ErrorBadRequest,
 			})
 			return
 		}
 		if err := req.Validate(); err != nil {
 			c.JSON(http.StatusBadRequest, &APIError{
-				Error: apierror.ErrorInvalidBody,
+				Error: err,
 			})
 			return
 		}
@@ -97,7 +98,7 @@ func signUp(api *APIServer) gin.HandlerFunc {
 	}
 }
 
-func (req *signupRequest) Validate() error {
+func (req *signupRequest) Validate() *centrifuge.Error {
 	req.Username = strings.TrimSpace(req.Username)
 	req.Email = strings.TrimSpace(req.Email)
 	if req.Username == "" {

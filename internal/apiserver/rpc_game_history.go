@@ -20,7 +20,7 @@ type RPCGameHistoryResponse struct {
 func (app *APIServer) GameHistory(c *websocket.Client, jsonData []byte) (*RPCGameHistoryResponse, error) {
 	var req RPCGameHistoryRequest
 	if err := json.Unmarshal(jsonData, &req); err != nil {
-		return nil, apierror.ErrorInvalidBody
+		return nil, apierror.ErrorBadRequest
 	}
 	req.Username = strings.TrimSpace(req.Username)
 	if req.Username == "" {
