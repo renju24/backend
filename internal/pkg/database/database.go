@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -62,7 +63,7 @@ func (db *Database) CreateUser(username, email, passwordBcrypt string) (*model.U
 	user := model.User{
 		Username:       username,
 		Email:          email,
-		PasswordBcrypt: passwordBcrypt,
+		PasswordBcrypt: &passwordBcrypt,
 	}
 	query := `INSERT INTO users (username, email, password_bcrypt) VALUES ($1, $2, $3) RETURNING id, ranking;`
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
@@ -85,8 +86,82 @@ func (db *Database) CreateUser(username, email, passwordBcrypt string) (*model.U
 	return &user, nil
 }
 
+func (db *Database) CreateUserOauth(username, email, oauthID string, oauthSerivce config.OauthService) (*model.User, error) {
+	switch oauthSerivce {
+	case config.OauthGoogle:
+		return db.createGoogleUser(username, email, oauthID, 0)
+	case config.OauthYandex:
+		return db.createYandexUser(username, email, oauthID, 0)
+	}
+	return nil, errors.New("invalid oauth service")
+}
+
+func (db *Database) createGoogleUser(username, email, googleID string, i int) (*model.User, error) {
+	if i > 0 {
+		username = fmt.Sprintf("%s-%d", username, i)
+	}
+	user := model.User{
+		Username: username,
+		Email:    email,
+		GoogleID: &googleID,
+	}
+	query := `INSERT INTO users (username, email, google_id) VALUES ($1, $2, $3) RETURNING id, ranking;`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	if err := db.pool.QueryRow(ctx, query, username, email, googleID).Scan(&user.ID, &user.Ranking); err != nil {
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) {
+			if pgxErr.ConstraintName == "unique_google_id" && pgxErr.Code == pgerrcode.UniqueViolation {
+				// if user with this google id already exists, then select and return him.
+				return db.GetUserByGoogleID(googleID)
+			}
+			if pgxErr.ConstraintName == "unique_username" && pgxErr.Code == pgerrcode.UniqueViolation {
+				// if username is already taken then increment it.
+				return db.createGoogleUser(username, email, googleID, i+1)
+			}
+			if pgxErr.ConstraintName == "unique_email" && pgxErr.Code == pgerrcode.UniqueViolation {
+				return nil, apierror.ErrorEmailIsTaken
+			}
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (db *Database) createYandexUser(username, email, yandexID string, i int) (*model.User, error) {
+	if i > 0 {
+		username = fmt.Sprintf("%s-%d", username, i)
+	}
+	user := model.User{
+		Username: username,
+		Email:    email,
+		YandexID: &yandexID,
+	}
+	query := `INSERT INTO users (username, email, yandex_id) VALUES ($1, $2, $3) RETURNING id, ranking;`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	if err := db.pool.QueryRow(ctx, query, username, email, yandexID).Scan(&user.ID, &user.Ranking); err != nil {
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) {
+			if pgxErr.ConstraintName == "unique_yandex_id" && pgxErr.Code == pgerrcode.UniqueViolation {
+				// if user with this yandex id already exists, then select and return him.
+				return db.GetUserByYandexID(yandexID)
+			}
+			if pgxErr.ConstraintName == "unique_username" && pgxErr.Code == pgerrcode.UniqueViolation {
+				// if username is already taken then increment it.
+				return db.createYandexUser(username, email, yandexID, i+1)
+			}
+			if pgxErr.ConstraintName == "unique_email" && pgxErr.Code == pgerrcode.UniqueViolation {
+				return nil, apierror.ErrorEmailIsTaken
+			}
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (db *Database) GetUserByLogin(login string) (*model.User, error) {
-	query := "SELECT id, username, email, ranking, password_bcrypt FROM users "
+	query := "SELECT id, username, email, google_id, yandex_id, ranking, password_bcrypt FROM users "
 	if strings.Contains(login, "@") {
 		query += "WHERE email = $1"
 	} else {
@@ -99,6 +174,8 @@ func (db *Database) GetUserByLogin(login string) (*model.User, error) {
 		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.GoogleID,
+		&user.YandexID,
 		&user.Ranking,
 		&user.PasswordBcrypt,
 	)
@@ -110,13 +187,55 @@ func (db *Database) GetUserByLogin(login string) (*model.User, error) {
 
 func (db *Database) GetUserByID(userID int64) (*model.User, error) {
 	var user model.User
-	query := `SELECT id, username, email, ranking, password_bcrypt FROM users WHERE id = $1`
+	query := `SELECT id, username, email, google_id, yandex_id, ranking, password_bcrypt FROM users WHERE id = $1`
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
 	defer cancel()
 	err := db.pool.QueryRow(ctx, query, userID).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.GoogleID,
+		&user.YandexID,
+		&user.Ranking,
+		&user.PasswordBcrypt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, apierror.ErrorUserNotFound
+	}
+	return &user, err
+}
+
+func (db *Database) GetUserByGoogleID(googleID string) (*model.User, error) {
+	var user model.User
+	query := `SELECT id, username, email, google_id, yandex_id, ranking, password_bcrypt FROM users WHERE google_id = $1`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	err := db.pool.QueryRow(ctx, query, googleID).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.GoogleID,
+		&user.YandexID,
+		&user.Ranking,
+		&user.PasswordBcrypt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, apierror.ErrorUserNotFound
+	}
+	return &user, err
+}
+
+func (db *Database) GetUserByYandexID(yandexID string) (*model.User, error) {
+	var user model.User
+	query := `SELECT id, username, email, google_id, yandex_id, ranking, password_bcrypt FROM users WHERE yandex_id = $1`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	err := db.pool.QueryRow(ctx, query, yandexID).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.GoogleID,
+		&user.YandexID,
 		&user.Ranking,
 		&user.PasswordBcrypt,
 	)

@@ -26,4 +26,31 @@ type Config struct {
 			} `json:"header"`
 		} `json:"token"`
 	} `json:"server"`
+
+	Oauth2 struct {
+		DeepLinks OauthRedirects `json:"deep_links"`
+		Google    OauthConfig    `json:"google"`
+		Yandex    OauthConfig    `json:"yandex"`
+	} `json:"oauth2"`
+}
+
+type OauthService string
+
+const (
+	OauthGoogle OauthService = "Google"
+	OauthYandex OauthService = "Yandex"
+)
+
+type OauthConfig struct {
+	ClientID     string         `json:"client_id"`
+	ClientSecret string         `json:"client_secret"`
+	Scopes       []string       `json:"scopes"`
+	Callbacks    OauthRedirects `json:"callbacks"`
+	API          string         `json:"api_url"`
+}
+
+type OauthRedirects struct {
+	Web     string `json:"web"`
+	Android string `json:"android"`
+	IOS     string `json:"ios"`
 }

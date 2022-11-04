@@ -2,6 +2,8 @@ package apiserver
 
 import (
 	"context"
+	"errors"
+	"log"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -13,6 +15,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/renju24/backend/internal/pkg/config"
 	"github.com/rs/zerolog"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/yandex"
 )
 
 // APIServer is the main object of programm.
@@ -91,6 +96,33 @@ func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configRead
 		apiRoutes.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "PONG") })
 	}
 
+	// POST /api/v1/oauth2/login/:platform
+	oauthLoginRoutes := apiRoutes.Group("/oauth2/login/:platform")
+	{
+		oauthLoginRoutes.GET("/google", func(c *gin.Context) {
+			oauthConfig, err := googleOauthConfig(a, c.Param("platform"))
+			if err != nil {
+				log.Fatalln(err)
+			}
+			authPage := oauthConfig.AuthCodeURL("state")
+			c.Redirect(http.StatusMovedPermanently, authPage)
+		})
+		oauthLoginRoutes.GET("/yandex", func(c *gin.Context) {
+			oauthConfig, err := yandexOauthConfig(a, c.Param("platform"))
+			if err != nil {
+				log.Fatalln(err)
+			}
+			authPage := oauthConfig.AuthCodeURL("state")
+			c.Redirect(http.StatusMovedPermanently, authPage)
+		})
+	}
+
+	oauthCallbackRoutes := apiRoutes.Group("/oauth2/callback/:platform")
+	{
+		oauthCallbackRoutes.GET("/google", googleOauth(a))
+		oauthCallbackRoutes.GET("/yandex", yandexOauth(a))
+	}
+
 	// Initialize WebSocket server.
 	node, handler, err := websocket.New(websocket.Config{
 		Engine:        &websocket.MemoryEngine{},
@@ -112,4 +144,40 @@ func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configRead
 	a.router.GET("/connection/websocket", gin.WrapH(handler))
 
 	return a
+}
+
+func googleOauthConfig(a *APIServer, platform string) (*oauth2.Config, error) {
+	cfg := &oauth2.Config{
+		ClientID:     a.config.Oauth2.Google.ClientID,
+		ClientSecret: a.config.Oauth2.Google.ClientSecret,
+		Scopes:       a.config.Oauth2.Google.Scopes,
+		Endpoint:     google.Endpoint,
+	}
+	switch platform {
+	case "web":
+		cfg.RedirectURL = a.config.Oauth2.Google.Callbacks.Web
+	case "android":
+		cfg.RedirectURL = a.config.Oauth2.Google.Callbacks.Android
+	default:
+		return nil, errors.New("invalid platform")
+	}
+	return cfg, nil
+}
+
+func yandexOauthConfig(a *APIServer, platform string) (*oauth2.Config, error) {
+	cfg := &oauth2.Config{
+		ClientID:     a.config.Oauth2.Yandex.ClientID,
+		ClientSecret: a.config.Oauth2.Yandex.ClientSecret,
+		Scopes:       a.config.Oauth2.Yandex.Scopes,
+		Endpoint:     yandex.Endpoint,
+	}
+	switch platform {
+	case "web":
+		cfg.RedirectURL = a.config.Oauth2.Yandex.Callbacks.Web
+	case "android":
+		cfg.RedirectURL = a.config.Oauth2.Yandex.Callbacks.Android
+	default:
+		return nil, errors.New("invalid platform")
+	}
+	return cfg, nil
 }
