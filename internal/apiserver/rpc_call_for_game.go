@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/armantarkhanian/websocket"
 	"github.com/centrifugal/centrifuge"
+	"github.com/renju24/backend/internal/pkg/apierror"
 )
 
 type RPCCallForGameRequest struct {
@@ -19,37 +21,46 @@ type RPCCallForGameResponse struct {
 	Status string `json:"status"`
 }
 
-func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*RPCCallForGameResponse, error) {
+func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*RPCCallForGameResponse, *apierror.Error, *centrifuge.Error) {
 	var req RPCCallForGameRequest
 	if err := json.Unmarshal(jsonData, &req); err != nil {
-		return nil, err
+		return nil, apierror.ErrorInvalidBody, centrifuge.ErrorBadRequest
 	}
 	req.Username = strings.TrimSpace(req.Username)
 	if req.Username == "" {
-		return nil, centrifuge.ErrorBadRequest
+		return nil, apierror.ErrorUsernameIsRequired, centrifuge.ErrorBadRequest
 	}
 	inviterID, err := strconv.ParseInt(c.UserID(), 10, 64)
 	if err != nil {
-		return nil, centrifuge.ErrorInternal
+		return nil, apierror.ErrorUnauthorized, centrifuge.ErrorUnauthorized
 	}
 	inviter, err := apiServer.db.GetUserByID(inviterID)
 	if err != nil {
-		return nil, centrifuge.ErrorInternal
+		if errors.Is(err, apierror.ErrorUserNotFound) {
+			return nil, apierror.ErrorUnauthorized, centrifuge.ErrorUnauthorized
+		}
+		apiServer.logger.Error().Err(err).Send()
+		return nil, apierror.ErrorInternal, centrifuge.ErrorInternal
 	}
 	if inviter.Username == req.Username {
-		return &RPCCallForGameResponse{"ok"}, nil
+		return nil, apierror.ErrorCallingYourselfForGame, centrifuge.ErrorBadRequest
 	}
 	opponent, err := apiServer.db.GetUserByLogin(req.Username)
 	if err != nil {
-		return nil, centrifuge.ErrorInternal
+		if errors.Is(err, apierror.ErrorUserNotFound) {
+			return nil, apierror.ErrorUserNotFound, centrifuge.ErrorBadRequest
+		}
+		apiServer.logger.Error().Err(err).Send()
+		return nil, apierror.ErrorInternal, centrifuge.ErrorInternal
 	}
 	_, err = apiServer.PublishEvent(fmt.Sprintf("user_%d", opponent.ID), &EventGameInvitation{
 		Inviter:   inviter.Username,
 		InvitedAt: time.Now(),
 	})
 	if err != nil {
-		return nil, err
+		apiServer.logger.Error().Err(err).Send()
+		return nil, apierror.ErrorInternal, centrifuge.ErrorInternal
 	}
 	// TODO: send push notifications.
-	return &RPCCallForGameResponse{"ok"}, nil
+	return &RPCCallForGameResponse{"ok"}, nil, nil
 }

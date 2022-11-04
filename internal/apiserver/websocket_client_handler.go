@@ -7,6 +7,7 @@ import (
 
 	"github.com/armantarkhanian/websocket"
 	"github.com/centrifugal/centrifuge"
+	"github.com/renju24/backend/internal/pkg/apierror"
 )
 
 func (*APIServer) OnAlive(*websocket.Client) {}
@@ -45,28 +46,33 @@ func (app *APIServer) OnSubscribe(c *websocket.Client, e centrifuge.SubscribeEve
 
 func (apiServer *APIServer) OnRPC(c *websocket.Client, rpc centrifuge.RPCEvent) (centrifuge.RPCReply, error) {
 	var response any
-	var err error
+	var apiError *apierror.Error
+	var centrifugeError *centrifuge.Error
 	switch rpc.Method {
 	case "get_user":
-		response, err = apiServer.GetUser(c, rpc.Data)
+		response, apiError, centrifugeError = apiServer.GetUser(c, rpc.Data)
 	case "game_history":
-		response, err = apiServer.GameHistory(c, rpc.Data)
+		response, apiError, centrifugeError = apiServer.GameHistory(c, rpc.Data)
 	case "find_users":
-		response, err = apiServer.FindUsers(c, rpc.Data)
+		response, apiError, centrifugeError = apiServer.FindUsers(c, rpc.Data)
 	case "call_for_game":
-		response, err = apiServer.CallForGame(c, rpc.Data)
+		response, apiError, centrifugeError = apiServer.CallForGame(c, rpc.Data)
 	default:
 		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
 	}
-	if err != nil {
-		apiServer.logger.Error().Err(err).Send()
-		return centrifuge.RPCReply{}, err
+	if centrifugeError != nil {
+		if apiError == nil {
+			apiError = apierror.ErrorInternal
+		}
+		data, _ := json.Marshal(apiError)
+		return centrifuge.RPCReply{Data: data}, centrifugeError
 	}
 
 	data, err := json.Marshal(response)
 	if err != nil {
 		apiServer.logger.Error().Err(err).Send()
-		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
+		data, _ = json.Marshal(apierror.ErrorInternal)
+		return centrifuge.RPCReply{Data: data}, centrifuge.ErrorInternal
 	}
 
 	return centrifuge.RPCReply{Data: data}, nil

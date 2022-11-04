@@ -39,3 +39,5 @@ var (
 	ErrorMissingDigitInPassword  = &Error{214, "missing digit character"}
 	ErrorPasswordsNotEqual       = &Error{215, "passwords are not equal"}
 )
+
+var ErrorCallingYourselfForGame = &Error{216, "can't call yourself for a game"}
