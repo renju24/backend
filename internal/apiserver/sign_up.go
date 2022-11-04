@@ -31,20 +31,20 @@ func signUp(api *APIServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req signupRequest
 		if err := c.ShouldBindWith(&req, binding.JSON); err != nil {
-			c.JSON(http.StatusBadRequest, &APIError{
+			c.JSON(http.StatusBadRequest, &apierror.Error{
 				Error: apierror.ErrorBadRequest,
 			})
 			return
 		}
 		if err := req.Validate(); err != nil {
-			c.JSON(http.StatusBadRequest, &APIError{
+			c.JSON(http.StatusBadRequest, &apierror.Error{
 				Error: err,
 			})
 			return
 		}
 		passwordBcrypt, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, &APIError{
+			c.JSON(http.StatusInternalServerError, &apierror.Error{
 				Error: apierror.ErrorInternal,
 			})
 			return
@@ -52,18 +52,18 @@ func signUp(api *APIServer) gin.HandlerFunc {
 		user, err := api.db.CreateUser(req.Username, req.Email, string(passwordBcrypt))
 		if err != nil {
 			if errors.Is(err, apierror.ErrorUsernameIsTaken) {
-				c.JSON(http.StatusBadRequest, &APIError{
+				c.JSON(http.StatusBadRequest, &apierror.Error{
 					Error: apierror.ErrorUsernameIsTaken,
 				})
 				return
 			}
 			if errors.Is(err, apierror.ErrorEmailIsTaken) {
-				c.JSON(http.StatusBadRequest, &APIError{
+				c.JSON(http.StatusBadRequest, &apierror.Error{
 					Error: apierror.ErrorEmailIsTaken,
 				})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, &APIError{
+			c.JSON(http.StatusInternalServerError, &apierror.Error{
 				Error: apierror.ErrorInternal,
 			})
 			return
@@ -74,7 +74,7 @@ func signUp(api *APIServer) gin.HandlerFunc {
 			ExpirationTime: int64(api.config.Server.Token.Cookie.MaxAge),
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, &APIError{
+			c.JSON(http.StatusInternalServerError, &apierror.Error{
 				Error: apierror.ErrorInternal,
 			})
 			return

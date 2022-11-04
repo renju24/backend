@@ -25,7 +25,7 @@ func signIn(api *APIServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req signinRequest
 		if err := c.ShouldBindWith(&req, binding.JSON); err != nil {
-			c.JSON(http.StatusBadRequest, &APIError{
+			c.JSON(http.StatusBadRequest, &apierror.Error{
 				Error: apierror.ErrorBadRequest,
 			})
 			return
@@ -33,18 +33,18 @@ func signIn(api *APIServer) gin.HandlerFunc {
 		user, err := api.db.GetUserByLogin(req.Login)
 		if err != nil {
 			if errors.Is(err, apierror.ErrorUserNotFound) {
-				c.JSON(http.StatusBadRequest, &APIError{
+				c.JSON(http.StatusBadRequest, &apierror.Error{
 					Error: apierror.ErrorUserNotFound,
 				})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, &APIError{
+			c.JSON(http.StatusInternalServerError, &apierror.Error{
 				Error: apierror.ErrorInternal,
 			})
 			return
 		}
 		if bcrypt.CompareHashAndPassword([]byte(user.PasswordBcrypt), []byte(req.Password)) != nil {
-			c.JSON(http.StatusBadRequest, &APIError{
+			c.JSON(http.StatusBadRequest, &apierror.Error{
 				Error: apierror.ErrorInvalidCredentials,
 			})
 			return
@@ -55,7 +55,7 @@ func signIn(api *APIServer) gin.HandlerFunc {
 			ExpirationTime: int64(api.config.Server.Token.Cookie.MaxAge),
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, &APIError{
+			c.JSON(http.StatusInternalServerError, &apierror.Error{
 				Error: apierror.ErrorInternal,
 			})
 			return

@@ -1,8 +1,50 @@
 package apierror
 
 import (
+	"encoding/json"
+
 	"github.com/centrifugal/centrifuge"
 )
+
+// Error is the JSON-object that server will return when an error occurs.
+type Error struct {
+	Error *centrifuge.Error `json:"error"`
+}
+
+type apiErrorJSON struct {
+	Error errorJSON `json:"error"`
+}
+
+type errorJSON struct {
+	Code      uint32 `json:"code"`
+	Message   string `json:"message"`
+	Temporary bool   `json:"temporary"`
+}
+
+// MarshalJSON ...
+func (e *Error) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&apiErrorJSON{
+		Error: errorJSON{
+			Code:      e.Error.Code,
+			Message:   e.Error.Message,
+			Temporary: e.Error.Temporary,
+		},
+	})
+}
+
+// MarshalJSON ...
+func (e *Error) UnmarshalJSON(data []byte) error {
+	var apiError apiErrorJSON
+	if err := json.Unmarshal(data, &apiError); err != nil {
+		return err
+	}
+	e.Error = &centrifuge.Error{
+		Code:      apiError.Error.Code,
+		Message:   apiError.Error.Message,
+		Temporary: apiError.Error.Temporary,
+	}
+	return nil
+}
 
 var (
 	ErrorInternal                   = centrifuge.ErrorInternal
