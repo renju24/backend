@@ -16,12 +16,14 @@ import (
 	"github.com/renju24/backend/model"
 )
 
+const DefaultQueryTimeout = 5 * time.Second
+
 type Database struct {
 	pool *pgxpool.Pool
 }
 
 func New(dsn string) (*Database, error) {
-	db, err := pgxpool.New(context.TODO(), dsn)
+	db, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +46,9 @@ func (db *Database) ReadConfig() (*config.Config, error) {
 		configJSON    []byte
 		config        config.Config
 	)
-	if err := db.pool.QueryRow(context.TODO(), query).Scan(&configVersion, &configJSON); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	if err := db.pool.QueryRow(ctx, query).Scan(&configVersion, &configJSON); err != nil {
 		return nil, err
 	}
 	if err := json.Unmarshal(configJSON, &config); err != nil {
@@ -61,7 +65,9 @@ func (db *Database) CreateUser(username, email, passwordBcrypt string) (*model.U
 		PasswordBcrypt: passwordBcrypt,
 	}
 	query := `INSERT INTO users (username, email, password_bcrypt) VALUES ($1, $2, $3) RETURNING id, ranking;`
-	if err := db.pool.QueryRow(context.TODO(), query, username, email, passwordBcrypt).Scan(
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	if err := db.pool.QueryRow(ctx, query, username, email, passwordBcrypt).Scan(
 		&user.ID,
 		&user.Ranking,
 	); err != nil {
@@ -87,7 +93,9 @@ func (db *Database) GetUserByLogin(login string) (*model.User, error) {
 		query += "WHERE username = $1"
 	}
 	var user model.User
-	err := db.pool.QueryRow(context.TODO(), query, login).Scan(
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	err := db.pool.QueryRow(ctx, query, login).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,
@@ -103,7 +111,9 @@ func (db *Database) GetUserByLogin(login string) (*model.User, error) {
 func (db *Database) GetUserByID(userID int64) (*model.User, error) {
 	var user model.User
 	query := `SELECT id, username, email, ranking, password_bcrypt FROM users WHERE id = $1`
-	err := db.pool.QueryRow(context.TODO(), query, userID).Scan(
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	err := db.pool.QueryRow(ctx, query, userID).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,
@@ -124,7 +134,9 @@ func (db *Database) CreateGame(blackUserID, whiteUserID int64) (*model.Game, err
 		StartedAt:   now,
 	}
 	query := `INSERT INTO games (black_user_id, white_user_id, started_at) VALUES ($1, $2, $3) RETURNING id;`
-	if err := db.pool.QueryRow(context.TODO(), query, blackUserID, whiteUserID, now).Scan(&game.ID); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	if err := db.pool.QueryRow(ctx, query, blackUserID, whiteUserID, now).Scan(&game.ID); err != nil {
 		return nil, err
 	}
 	return &game, nil
@@ -133,7 +145,9 @@ func (db *Database) CreateGame(blackUserID, whiteUserID int64) (*model.Game, err
 func (db *Database) IsGameMember(userID, gameID int64) (bool, error) {
 	var ok bool
 	query := `SELECT TRUE FROM games WHERE id = $1 AND (black_user_id = $2 OR white_user_id = $3)`
-	if err := db.pool.QueryRow(context.TODO(), query, gameID, userID, userID).Scan(&ok); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	if err := db.pool.QueryRow(ctx, query, gameID, userID, userID).Scan(&ok); err != nil {
 		return false, err
 	}
 	return ok, nil
@@ -143,7 +157,9 @@ func (db *Database) FindUsers(username string) ([]*model.User, error) {
 	username = strings.Trim(username, "%")
 	username = "%" + username + "%"
 	query := `SELECT id, username, email, ranking, password_bcrypt FROM users WHERE username ILIKE $1`
-	rows, err := db.pool.Query(context.TODO(), query, username)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	rows, err := db.pool.Query(ctx, query, username)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +191,9 @@ func (db *Database) GameHistory(username string) ([]model.GameHistoryItem, error
 		WHERE
 			g.finished_at IS NOT NULL
 			AND (black.username = $1 OR white.username = $1);`
-	rows, err := db.pool.Query(context.TODO(), query, username)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	rows, err := db.pool.Query(ctx, query, username)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +210,9 @@ func (db *Database) GameHistory(username string) ([]model.GameHistoryItem, error
 }
 
 func (db *Database) Top10() ([]*model.User, error) {
-	rows, err := db.pool.Query(context.TODO(), `SELECT id, username, ranking FROM users ORDER BY ranking DESC LIMIT 10`)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	rows, err := db.pool.Query(ctx, `SELECT id, username, ranking FROM users ORDER BY ranking DESC LIMIT 10`)
 	if err != nil {
 		return nil, err
 	}
