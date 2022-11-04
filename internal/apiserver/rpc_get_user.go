@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/armantarkhanian/websocket"
 	"github.com/renju24/backend/internal/pkg/apierror"
@@ -24,6 +25,10 @@ func (apiServer *APIServer) GetUser(c *websocket.Client, jsonData []byte) (*RPCG
 	var req RPCGetUserRequest
 	if err := json.Unmarshal(jsonData, &req); err != nil {
 		return nil, apierror.ErrorBadRequest
+	}
+	req.Username = strings.TrimSpace(req.Username)
+	if req.Username == "" {
+		return nil, apierror.ErrorUsernameIsRequired
 	}
 	user, err := apiServer.db.GetUserByLogin(req.Username)
 	if err != nil {

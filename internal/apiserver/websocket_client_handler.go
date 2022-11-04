@@ -7,6 +7,7 @@ import (
 
 	"github.com/armantarkhanian/websocket"
 	"github.com/centrifugal/centrifuge"
+	"github.com/renju24/backend/internal/pkg/apierror"
 )
 
 func (*APIServer) OnAlive(*websocket.Client) {}
@@ -44,6 +45,9 @@ func (app *APIServer) OnSubscribe(c *websocket.Client, e centrifuge.SubscribeEve
 }
 
 func (apiServer *APIServer) OnRPC(c *websocket.Client, rpc centrifuge.RPCEvent) (centrifuge.RPCReply, error) {
+	if !c.Authorized() {
+		return centrifuge.RPCReply{}, apierror.ErrorUnauthorized
+	}
 	var response any
 	var err error
 	switch rpc.Method {
