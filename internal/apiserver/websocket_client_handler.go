@@ -55,6 +55,8 @@ func (apiServer *APIServer) OnRPC(c *websocket.Client, rpc centrifuge.RPCEvent) 
 		response, err = apiServer.FindUsers(c, rpc.Data)
 	case "call_for_game":
 		response, err = apiServer.CallForGame(c, rpc.Data)
+	case "top_10":
+		response, err = apiServer.Top10(c, rpc.Data)
 	default:
 		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
 	}

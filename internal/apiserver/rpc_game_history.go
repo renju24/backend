@@ -17,7 +17,7 @@ type RPCGameHistoryResponse struct {
 	Games []model.GameHistoryItem `json:"games"`
 }
 
-func (app *APIServer) GameHistory(c *websocket.Client, jsonData []byte) (*RPCGameHistoryResponse, error) {
+func (app *APIServer) GameHistory(_ *websocket.Client, jsonData []byte) (*RPCGameHistoryResponse, error) {
 	var req RPCGameHistoryRequest
 	if err := json.Unmarshal(jsonData, &req); err != nil {
 		return nil, apierror.ErrorBadRequest
