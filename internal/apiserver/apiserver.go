@@ -89,6 +89,8 @@ func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configRead
 		apiRoutes.POST("/sign_up", signUp(a))
 		apiRoutes.POST("/sign_in", signIn(a))
 		apiRoutes.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "PONG") })
+		apiRoutes.GET("/oauth2/login/:platform/:service", oauth2Login(a))
+		apiRoutes.GET("/oauth2/callback/:platform/:service", oauth2Callback(a))
 	}
 
 	// Initialize WebSocket server.

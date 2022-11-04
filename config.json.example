@@ -1,24 +1,51 @@
 {
-  "server": {
-	"cors": {
-	  "same_site": "strict",
-	  "access_control_allow_origin": "*",
-	  "access_control_allow_credentials": true
+	"server": {
+		"cors": {
+			"same_site": "strict",
+			"access_control_allow_origin": "*",
+			"access_control_allow_credentials": true
+		},
+
+		"token": {
+			"signing_key": "SECRET KEY",
+			"cookie": {
+				"name": "COOKIE_NAME",
+				"max_age": 3600,
+				"path": "/",
+				"domain": "localhost",
+				"secure": false,
+				"http_only": true
+			},
+			"header": {
+				"name": "Authorization"
+			}
+		}
 	},
 
-	"token": {
-	  "signing_key": "SECRET KEY",
-	  "cookie": {
-		"name": "COOKIE_NAME",
-		"max_age": 3600,
-		"path": "/",
-		"domain": "localhost",
-		"secure": false,
-		"http_only": true
-	  },
-	  "header": {
-		"name": "Authorization"
-	  }
+	"oauth2": {
+		"deep_links": {
+			"web": "http://localhost:8008",
+			"android": "renju24.java.com://path?token="
+		},
+		"google": {
+			"client_id": "<CLIENT_ID>",
+			"client_secret": "<CLIENT_SECRET>",
+			"scopes": [],
+			"callbacks": {
+				"web": "/api/v1/oauth2/callback/web/google",
+				"android": "/api/v1/oauth2/callback/android/google"
+			},
+			"api_url": "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
+		},
+		"yandex": {
+			"client_id": "<CLIENT_ID>",
+			"client_secret": "<CLIENT_SECRET>",
+			"scopes": [],
+			"callbacks": {
+				"web": "/api/v1/oauth2/callback/web/yandex",
+				"android": "/api/v1/oauth2/callback/android/yandex"
+			},
+			"api_url": "https://login.yandex.ru/info?format=json"
+		}
 	}
-  }
 }

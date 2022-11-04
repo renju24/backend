@@ -43,7 +43,7 @@ func signIn(api *APIServer) gin.HandlerFunc {
 			})
 			return
 		}
-		if bcrypt.CompareHashAndPassword([]byte(user.PasswordBcrypt), []byte(req.Password)) != nil {
+		if bcrypt.CompareHashAndPassword([]byte(*user.PasswordBcrypt), []byte(req.Password)) != nil {
 			c.JSON(http.StatusBadRequest, &apierror.Error{
 				Error: apierror.ErrorInvalidCredentials,
 			})
