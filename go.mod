@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/armantarkhanian/jwt v1.9.0
-	github.com/armantarkhanian/websocket v1.0.0
+	github.com/armantarkhanian/websocket v1.1.0
 	github.com/centrifugal/centrifuge v0.26.0
 	github.com/gin-gonic/autotls v0.0.5
 	github.com/gin-gonic/gin v1.8.1
