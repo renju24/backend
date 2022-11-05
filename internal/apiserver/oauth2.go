@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/armantarkhanian/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/renju24/backend/internal/pkg/config"
 	"golang.org/x/oauth2"
@@ -91,6 +92,15 @@ func oauth2Login(api *APIServer) gin.HandlerFunc {
 		if err != nil {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
+		}
+		if platform == config.Web {
+			cookieValue, _ := c.Cookie(api.config.Server.Token.Cookie.Name)
+			var payload jwt.Payload
+			if err = api.jwt.Decode(cookieValue, &payload); err == nil {
+				// If user is already authorized, then redirect him to the main page.
+				c.Redirect(http.StatusFound, api.config.Oauth2.DeepLinks.Web)
+				return
+			}
 		}
 		var oauthCfg *oauth2.Config
 		switch service {
