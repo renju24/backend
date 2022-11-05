@@ -32,8 +32,8 @@
 			"client_secret": "<CLIENT_SECRET>",
 			"scopes": [],
 			"callbacks": {
-				"web": "/api/v1/oauth2/callback/web/google",
-				"android": "/api/v1/oauth2/callback/android/google"
+				"web": "/api/v1/oauth2/web/google/callback",
+				"android": "/api/v1/oauth2/android/google/callback"
 			},
 			"api_url": "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
 		},
@@ -42,8 +42,8 @@
 			"client_secret": "<CLIENT_SECRET>",
 			"scopes": [],
 			"callbacks": {
-				"web": "/api/v1/oauth2/callback/web/yandex",
-				"android": "/api/v1/oauth2/callback/android/yandex"
+				"web": "/api/v1/oauth2/web/yandex/callback",
+				"android": "/api/v1/oauth2/android/yandex/callback"
 			},
 			"api_url": "https://login.yandex.ru/info?format=json"
 		}
