@@ -27,33 +27,18 @@ type Config struct {
 		} `json:"token"`
 	} `json:"server"`
 
-	Oauth2 struct {
-		DeepLinks OauthRedirects `json:"deep_links"`
-		Google    OauthConfig    `json:"google"`
-		Yandex    OauthConfig    `json:"yandex"`
-		Github    OauthConfig    `json:"github"`
-		VK        OauthConfig    `json:"vk"`
-	} `json:"oauth2"`
+	Oauth2 OauthConfig `json:"oauth2"`
 }
 
-type Platform string
-
-const (
-	Web     Platform = "web"
-	Android Platform = "android"
-	IOS     Platform = "ios"
-)
-
-type OauthService string
-
-const (
-	Google OauthService = "google"
-	Yandex OauthService = "yandex"
-	Github OauthService = "github"
-	VK     OauthService = "vk"
-)
-
 type OauthConfig struct {
+	DeepLinks OauthRedirects      `json:"deep_links"`
+	Google    OauthProviderConfig `json:"google"`
+	Yandex    OauthProviderConfig `json:"yandex"`
+	Github    OauthProviderConfig `json:"github"`
+	VK        OauthProviderConfig `json:"vk"`
+}
+
+type OauthProviderConfig struct {
 	ClientID     string         `json:"client_id"`
 	ClientSecret string         `json:"client_secret"`
 	Scopes       []string       `json:"scopes"`

@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/renju24/backend/internal/pkg/apierror"
 	"github.com/renju24/backend/internal/pkg/config"
+	oauth "github.com/renju24/backend/internal/pkg/oauth2"
 	"github.com/renju24/backend/model"
 )
 
@@ -86,15 +87,15 @@ func (db *Database) CreateUser(username, email, passwordBcrypt string) (*model.U
 	return &user, nil
 }
 
-func (db *Database) CreateUserOauth(username string, email *string, oauthID string, oauthSerivce config.OauthService) (*model.User, error) {
+func (db *Database) CreateUserOauth(username string, email *string, oauthID string, oauthSerivce oauth.Service) (*model.User, error) {
 	switch oauthSerivce {
-	case config.Google:
+	case oauth.Google:
 		return db.createGoogleUser(username, email, oauthID, 0)
-	case config.Yandex:
+	case oauth.Yandex:
 		return db.createYandexUser(username, email, oauthID, 0)
-	case config.Github:
+	case oauth.Github:
 		return db.createGithubUser(username, email, oauthID, 0)
-	case config.VK:
+	case oauth.VK:
 		return db.createVKUser(username, email, oauthID, 0)
 	}
 	return nil, errors.New("invalid oauth service")

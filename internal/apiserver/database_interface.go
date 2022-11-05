@@ -1,7 +1,7 @@
 package apiserver
 
 import (
-	"github.com/renju24/backend/internal/pkg/config"
+	oauth "github.com/renju24/backend/internal/pkg/oauth2"
 	"github.com/renju24/backend/model"
 )
 
@@ -10,7 +10,7 @@ type Database interface {
 	CreateUser(username, email, passwordBcrypt string) (*model.User, error)
 
 	// Create new user from oauth.
-	CreateUserOauth(username string, email *string, oauthID string, oauthSerivce config.OauthService) (*model.User, error)
+	CreateUserOauth(username string, email *string, oauthID string, oauthSerivce oauth.Service) (*model.User, error)
 
 	// Get user by login.
 	GetUserByLogin(login string) (*model.User, error)

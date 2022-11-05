@@ -1,18 +1,13 @@
 package apiserver
 
 import (
-	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/armantarkhanian/jwt"
 	"github.com/gin-gonic/gin"
-	"github.com/renju24/backend/internal/pkg/config"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/github"
-	"golang.org/x/oauth2/google"
-	"golang.org/x/oauth2/vk"
-	"golang.org/x/oauth2/yandex"
+	oauth "github.com/renju24/backend/internal/pkg/oauth2"
 )
 
 // TODO: hard code.
@@ -22,9 +17,9 @@ func oauth2Services(api *APIServer) gin.HandlerFunc {
 		URL   string `json:"url"`
 	}
 	type service struct {
-		Name    config.OauthService `json:"name"`
-		Web     imageAndURL         `json:"web"`
-		Android imageAndURL         `json:"android"`
+		Name    oauth.Service `json:"name"`
+		Web     imageAndURL   `json:"web"`
+		Android imageAndURL   `json:"android"`
 	}
 	type response struct {
 		Services []service `json:"services"`
@@ -33,7 +28,7 @@ func oauth2Services(api *APIServer) gin.HandlerFunc {
 		c.JSON(http.StatusOK, &response{
 			Services: []service{
 				{
-					Name: config.Google,
+					Name: oauth.Google,
 					Web: imageAndURL{
 						Image: "",
 						URL:   strings.TrimSuffix(api.config.Oauth2.Google.Callbacks.Web, "/callback"),
@@ -44,7 +39,7 @@ func oauth2Services(api *APIServer) gin.HandlerFunc {
 					},
 				},
 				{
-					Name: config.Yandex,
+					Name: oauth.Yandex,
 					Web: imageAndURL{
 						Image: "",
 						URL:   strings.TrimSuffix(api.config.Oauth2.Yandex.Callbacks.Web, "/callback"),
@@ -55,7 +50,7 @@ func oauth2Services(api *APIServer) gin.HandlerFunc {
 					},
 				},
 				{
-					Name: config.Github,
+					Name: oauth.Github,
 					Web: imageAndURL{
 						Image: "",
 						URL:   strings.TrimSuffix(api.config.Oauth2.Github.Callbacks.Web, "/callback"),
@@ -66,7 +61,7 @@ func oauth2Services(api *APIServer) gin.HandlerFunc {
 					},
 				},
 				{
-					Name: config.VK,
+					Name: oauth.VK,
 					Web: imageAndURL{
 						Image: "",
 						URL:   strings.TrimSuffix(api.config.Oauth2.VK.Callbacks.Web, "/callback"),
@@ -83,17 +78,17 @@ func oauth2Services(api *APIServer) gin.HandlerFunc {
 
 func oauth2Login(api *APIServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		service, err := parseService(c.Param("service"))
+		service, err := oauth.ParseService(c.Param("service"))
 		if err != nil {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
-		platform, err := parsePlatform(c.Param("platform"))
+		platform, err := oauth.ParsePlatform(c.Param("platform"))
 		if err != nil {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
-		if platform == config.Web {
+		if platform == oauth.Web {
 			cookieValue, _ := c.Cookie(api.config.Server.Token.Cookie.Name)
 			var payload jwt.Payload
 			if err = api.jwt.Decode(cookieValue, &payload); err == nil {
@@ -102,33 +97,8 @@ func oauth2Login(api *APIServer) gin.HandlerFunc {
 				return
 			}
 		}
-		var oauthCfg *oauth2.Config
-		switch service {
-		case config.Google:
-			oauthCfg, err = oauthConfig(api, config.Google, platform)
-			if err != nil {
-				c.AbortWithStatus(http.StatusNotFound)
-				return
-			}
-		case config.Yandex:
-			oauthCfg, err = oauthConfig(api, config.Yandex, platform)
-			if err != nil {
-				c.AbortWithStatus(http.StatusNotFound)
-				return
-			}
-		case config.Github:
-			oauthCfg, err = oauthConfig(api, config.Github, platform)
-			if err != nil {
-				c.AbortWithStatus(http.StatusNotFound)
-				return
-			}
-		case config.VK:
-			oauthCfg, err = oauthConfig(api, config.VK, platform)
-			if err != nil {
-				c.AbortWithStatus(http.StatusNotFound)
-				return
-			}
-		default:
+		oauthCfg, err := oauth.OauthConfig(api.config.Oauth2, service, platform)
+		if err != nil {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
@@ -139,118 +109,86 @@ func oauth2Login(api *APIServer) gin.HandlerFunc {
 
 func oauth2Callback(api *APIServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		service, err := parseService(c.Param("service"))
+		service, err := oauth.ParseService(c.Param("service"))
 		if err != nil {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
-		platform, err := parsePlatform(c.Param("platform"))
+		platform, err := oauth.ParsePlatform(c.Param("platform"))
 		if err != nil {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
+		code := c.Request.FormValue("code")
+		if code == "" {
+			switch platform {
+			case oauth.Android:
+				c.Redirect(http.StatusFound, api.config.Oauth2.DeepLinks.Android)
+			default:
+				c.Redirect(http.StatusFound, api.config.Oauth2.DeepLinks.Web)
+			}
+			return
+		}
+		var oauthUser *oauth.User
 		switch service {
-		case config.Google:
-			googleOauth(api, c, service, platform)
-		case config.Yandex:
-			yandexOauth(api, c, service, platform)
-		case config.Github:
-			githubOauth(api, c, service, platform)
-		case config.VK:
-			vkOauth(api, c, service, platform)
-		default:
-			c.AbortWithStatus(http.StatusNotFound)
+		case oauth.Google:
+			oauthUser, err = oauth.GoogleOauth(api.config.Oauth2, code, service, platform)
+		case oauth.Yandex:
+			oauthUser, err = oauth.YandexOauth(api.config.Oauth2, code, service, platform)
+		case oauth.Github:
+			oauthUser, err = oauth.GithubOauth(api.config.Oauth2, code, service, platform)
+		case oauth.VK:
+			oauthUser, err = oauth.VKOauth(api.config.Oauth2, code, service, platform)
 		}
+		if err != nil {
+			api.logger.Error().Err(err).Send()
+			switch platform {
+			case oauth.Android:
+				c.Redirect(http.StatusFound, api.config.Oauth2.DeepLinks.Android)
+			default:
+				c.Redirect(http.StatusFound, api.config.Oauth2.DeepLinks.Web)
+			}
+			return
+		}
+		user, err := api.db.CreateUserOauth(oauthUser.Username, oauthUser.Email, oauthUser.ID, service)
+		if err != nil {
+			api.logger.Error().Err(err).Send()
+			switch platform {
+			case oauth.Android:
+				c.Redirect(http.StatusFound, api.config.Oauth2.DeepLinks.Android)
+			default:
+				c.Redirect(http.StatusFound, api.config.Oauth2.DeepLinks.Web)
+			}
+			return
+		}
+		jwtToken, err := api.jwt.Encode(jwt.Payload{
+			Subject:        strconv.FormatInt(user.ID, 10),
+			ExpirationTime: int64(api.config.Server.Token.Cookie.MaxAge),
+		})
+		if err != nil {
+			api.logger.Error().Err(err).Send()
+			switch platform {
+			case oauth.Android:
+				c.Redirect(http.StatusFound, api.config.Oauth2.DeepLinks.Android)
+			default:
+				c.Redirect(http.StatusFound, api.config.Oauth2.DeepLinks.Web)
+			}
+			return
+		}
+		if platform == oauth.Android {
+			deepLink := api.config.Oauth2.DeepLinks.Android + "?token=" + jwtToken
+			c.Redirect(http.StatusFound, deepLink)
+			return
+		}
+		c.SetCookie(
+			api.config.Server.Token.Cookie.Name,
+			jwtToken,
+			api.config.Server.Token.Cookie.MaxAge,
+			api.config.Server.Token.Cookie.Path,
+			api.config.Server.Token.Cookie.Domain,
+			api.config.Server.Token.Cookie.Secure,
+			api.config.Server.Token.Cookie.HttpOnly,
+		)
+		c.Redirect(http.StatusFound, api.config.Oauth2.DeepLinks.Web)
 	}
-}
-
-var (
-	ErrUnknownPlatform = errors.New("unknown platform")
-	ErrUnknownService  = errors.New("unknown service")
-)
-
-func parsePlatform(s string) (config.Platform, error) {
-	switch s {
-	case "web":
-		return config.Web, nil
-	case "android":
-		return config.Android, nil
-	}
-	return "", ErrUnknownPlatform
-}
-
-func parseService(s string) (config.OauthService, error) {
-	switch s {
-	case "google":
-		return config.Google, nil
-	case "yandex":
-		return config.Yandex, nil
-	case "github":
-		return config.Github, nil
-	case "vk":
-		return config.VK, nil
-	}
-	return "", ErrUnknownService
-}
-
-func oauthConfig(a *APIServer, service config.OauthService, platform config.Platform) (*oauth2.Config, error) {
-	switch service {
-	case config.Google:
-		cfg := &oauth2.Config{
-			ClientID:     a.config.Oauth2.Google.ClientID,
-			ClientSecret: a.config.Oauth2.Google.ClientSecret,
-			Scopes:       a.config.Oauth2.Google.Scopes,
-			Endpoint:     google.Endpoint,
-		}
-		switch platform {
-		case config.Web:
-			cfg.RedirectURL = a.config.Oauth2.Google.Callbacks.Web
-		case config.Android:
-			cfg.RedirectURL = a.config.Oauth2.Google.Callbacks.Android
-		}
-		return cfg, nil
-	case config.Yandex:
-		cfg := &oauth2.Config{
-			ClientID:     a.config.Oauth2.Yandex.ClientID,
-			ClientSecret: a.config.Oauth2.Yandex.ClientSecret,
-			Scopes:       a.config.Oauth2.Yandex.Scopes,
-			Endpoint:     yandex.Endpoint,
-		}
-		switch platform {
-		case config.Web:
-			cfg.RedirectURL = a.config.Oauth2.Yandex.Callbacks.Web
-		case config.Android:
-			cfg.RedirectURL = a.config.Oauth2.Yandex.Callbacks.Android
-		}
-		return cfg, nil
-	case config.Github:
-		cfg := &oauth2.Config{
-			ClientID:     a.config.Oauth2.Github.ClientID,
-			ClientSecret: a.config.Oauth2.Github.ClientSecret,
-			Scopes:       a.config.Oauth2.Github.Scopes,
-			Endpoint:     github.Endpoint,
-		}
-		switch platform {
-		case config.Web:
-			cfg.RedirectURL = a.config.Oauth2.Github.Callbacks.Web
-		case config.Android:
-			cfg.RedirectURL = a.config.Oauth2.Github.Callbacks.Android
-		}
-		return cfg, nil
-	case config.VK:
-		cfg := &oauth2.Config{
-			ClientID:     a.config.Oauth2.VK.ClientID,
-			ClientSecret: a.config.Oauth2.VK.ClientSecret,
-			Scopes:       a.config.Oauth2.VK.Scopes,
-			Endpoint:     vk.Endpoint,
-		}
-		switch platform {
-		case config.Web:
-			cfg.RedirectURL = a.config.Oauth2.VK.Callbacks.Web
-		case config.Android:
-			cfg.RedirectURL = a.config.Oauth2.VK.Callbacks.Android
-		}
-		return cfg, nil
-	}
-	return nil, ErrUnknownService
 }
