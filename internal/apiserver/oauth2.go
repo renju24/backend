@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/renju24/backend/internal/pkg/config"
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/yandex"
 )
@@ -37,6 +38,12 @@ func oauth2Login(api *APIServer) gin.HandlerFunc {
 				c.AbortWithStatus(http.StatusNotFound)
 				return
 			}
+		case config.Github:
+			oauthCfg, err = oauthConfig(api, config.Github, platform)
+			if err != nil {
+				c.AbortWithStatus(http.StatusNotFound)
+				return
+			}
 		default:
 			c.AbortWithStatus(http.StatusNotFound)
 			return
@@ -63,6 +70,8 @@ func oauth2Callback(api *APIServer) gin.HandlerFunc {
 			googleOauth(api, c, service, platform)
 		case config.Yandex:
 			yandexOauth(api, c, service, platform)
+		case config.Github:
+			githubOauth(api, c, service, platform)
 		default:
 			c.AbortWithStatus(http.StatusNotFound)
 		}
@@ -90,6 +99,8 @@ func parseService(s string) (config.OauthService, error) {
 		return config.Google, nil
 	case "yandex":
 		return config.Yandex, nil
+	case "github":
+		return config.Github, nil
 	}
 	return "", ErrUnknownService
 }
@@ -122,6 +133,20 @@ func oauthConfig(a *APIServer, service config.OauthService, platform config.Plat
 			cfg.RedirectURL = a.config.Oauth2.Yandex.Callbacks.Web
 		case config.Android:
 			cfg.RedirectURL = a.config.Oauth2.Yandex.Callbacks.Android
+		}
+		return cfg, nil
+	case config.Github:
+		cfg := &oauth2.Config{
+			ClientID:     a.config.Oauth2.Github.ClientID,
+			ClientSecret: a.config.Oauth2.Github.ClientSecret,
+			Scopes:       a.config.Oauth2.Github.Scopes,
+			Endpoint:     github.Endpoint,
+		}
+		switch platform {
+		case config.Web:
+			cfg.RedirectURL = a.config.Oauth2.Github.Callbacks.Web
+		case config.Android:
+			cfg.RedirectURL = a.config.Oauth2.Github.Callbacks.Android
 		}
 		return cfg, nil
 	}

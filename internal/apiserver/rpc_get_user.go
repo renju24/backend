@@ -15,10 +15,10 @@ type RPCGetUserRequest struct {
 }
 
 type RPCGetUserResponse struct {
-	ID       int64  `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email,omitempty"`
-	Ranking  int    `json:"ranking"`
+	ID       int64   `json:"id"`
+	Username string  `json:"username"`
+	Email    *string `json:"email,omitempty"`
+	Ranking  int     `json:"ranking"`
 }
 
 func (apiServer *APIServer) GetUser(c *websocket.Client, jsonData []byte) (*RPCGetUserResponse, error) {
@@ -45,7 +45,7 @@ func (apiServer *APIServer) GetUser(c *websocket.Client, jsonData []byte) (*RPCG
 		Ranking:  user.Ranking,
 	}
 	if strconv.FormatInt(user.ID, 10) != c.UserID() {
-		resp.Email = ""
+		resp.Email = nil
 	}
 	return &resp, nil
 }

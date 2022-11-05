@@ -41,14 +41,7 @@ func (apiServer *APIServer) OnConnecting(_ *centrifuge.Node, e centrifuge.Connec
 		return nil, centrifuge.ConnectReply{}, centrifuge.DisconnectServerError
 	}
 
-	type userData struct {
-		ID       int64  `json:"id"`
-		Username string `json:"username"`
-		Email    string `json:"email"`
-		Ranking  int    `json:"ranking"`
-	}
-
-	b, err := json.Marshal(&userData{
+	b, err := json.Marshal(&RPCGetUserResponse{
 		ID:       user.ID,
 		Username: user.Username,
 		Email:    user.Email,

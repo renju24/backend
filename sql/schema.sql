@@ -6,14 +6,16 @@ CREATE TABLE config (
 CREATE TABLE users (
 	id              SERIAL       PRIMARY KEY,
 	username        VARCHAR(32)  NOT NULL,
-	email           VARCHAR(84)  NOT NULL,
+	email           VARCHAR(84)  NULL,
 	password_bcrypt VARCHAR(128) NULL,
-	google_id       VARCHAR(128) NULL,
-	yandex_id       VARCHAR(128) NULL,
+	google_id       VARCHAR(64)  NULL,
+	yandex_id       VARCHAR(64)  NULL,
+	github_id       VARCHAR(64)  NULL,
 	ranking         INT          NOT NULL DEFAULT 400
 );
-CREATE UNIQUE INDEX unique_yandex_id ON users (yandex_id);
 CREATE UNIQUE INDEX unique_google_id ON users (google_id);
+CREATE UNIQUE INDEX unique_yandex_id ON users (yandex_id);
+CREATE UNIQUE INDEX unique_github_id ON users (github_id);
 CREATE UNIQUE INDEX unique_username ON users (username);
 CREATE UNIQUE INDEX unique_email ON users (email);
 

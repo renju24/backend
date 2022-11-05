@@ -62,7 +62,7 @@ func (db *Database) ReadConfig() (*config.Config, error) {
 func (db *Database) CreateUser(username, email, passwordBcrypt string) (*model.User, error) {
 	user := model.User{
 		Username:       username,
-		Email:          email,
+		Email:          &email,
 		PasswordBcrypt: &passwordBcrypt,
 	}
 	query := `INSERT INTO users (username, email, password_bcrypt) VALUES ($1, $2, $3) RETURNING id, ranking;`
@@ -86,17 +86,19 @@ func (db *Database) CreateUser(username, email, passwordBcrypt string) (*model.U
 	return &user, nil
 }
 
-func (db *Database) CreateUserOauth(username, email, oauthID string, oauthSerivce config.OauthService) (*model.User, error) {
+func (db *Database) CreateUserOauth(username string, email *string, oauthID string, oauthSerivce config.OauthService) (*model.User, error) {
 	switch oauthSerivce {
 	case config.Google:
 		return db.createGoogleUser(username, email, oauthID, 0)
 	case config.Yandex:
 		return db.createYandexUser(username, email, oauthID, 0)
+	case config.Github:
+		return db.createGithubUser(username, email, oauthID, 0)
 	}
 	return nil, errors.New("invalid oauth service")
 }
 
-func (db *Database) createGoogleUser(username, email, googleID string, i int) (*model.User, error) {
+func (db *Database) createGoogleUser(username string, email *string, googleID string, i int) (*model.User, error) {
 	if i > 0 {
 		username = fmt.Sprintf("%s-%d", username, i)
 	}
@@ -128,7 +130,7 @@ func (db *Database) createGoogleUser(username, email, googleID string, i int) (*
 	return &user, nil
 }
 
-func (db *Database) createYandexUser(username, email, yandexID string, i int) (*model.User, error) {
+func (db *Database) createYandexUser(username string, email *string, yandexID string, i int) (*model.User, error) {
 	if i > 0 {
 		username = fmt.Sprintf("%s-%d", username, i)
 	}
@@ -150,6 +152,38 @@ func (db *Database) createYandexUser(username, email, yandexID string, i int) (*
 			if pgxErr.ConstraintName == "unique_username" && pgxErr.Code == pgerrcode.UniqueViolation {
 				// if username is already taken then increment it.
 				return db.createYandexUser(username, email, yandexID, i+1)
+			}
+			if pgxErr.ConstraintName == "unique_email" && pgxErr.Code == pgerrcode.UniqueViolation {
+				return nil, apierror.ErrorEmailIsTaken
+			}
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (db *Database) createGithubUser(username string, email *string, githubID string, i int) (*model.User, error) {
+	if i > 0 {
+		username = fmt.Sprintf("%s-%d", username, i)
+	}
+	user := model.User{
+		Username: username,
+		Email:    email,
+		GithubID: &githubID,
+	}
+	query := `INSERT INTO users (username, email, github_id) VALUES ($1, $2, $3) RETURNING id, ranking;`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	if err := db.pool.QueryRow(ctx, query, username, email, githubID).Scan(&user.ID, &user.Ranking); err != nil {
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) {
+			if pgxErr.ConstraintName == "unique_github_id" && pgxErr.Code == pgerrcode.UniqueViolation {
+				// if user with this github id already exists, then select and return him.
+				return db.GetUserByGithubID(githubID)
+			}
+			if pgxErr.ConstraintName == "unique_username" && pgxErr.Code == pgerrcode.UniqueViolation {
+				// if username is already taken then increment it.
+				return db.createGithubUser(username, email, githubID, i+1)
 			}
 			if pgxErr.ConstraintName == "unique_email" && pgxErr.Code == pgerrcode.UniqueViolation {
 				return nil, apierror.ErrorEmailIsTaken
@@ -207,15 +241,13 @@ func (db *Database) GetUserByID(userID int64) (*model.User, error) {
 
 func (db *Database) GetUserByGoogleID(googleID string) (*model.User, error) {
 	var user model.User
-	query := `SELECT id, username, email, google_id, yandex_id, ranking, password_bcrypt FROM users WHERE google_id = $1`
+	query := `SELECT id, username, email, ranking, password_bcrypt FROM users WHERE google_id = $1`
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
 	defer cancel()
 	err := db.pool.QueryRow(ctx, query, googleID).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,
-		&user.GoogleID,
-		&user.YandexID,
 		&user.Ranking,
 		&user.PasswordBcrypt,
 	)
@@ -227,15 +259,31 @@ func (db *Database) GetUserByGoogleID(googleID string) (*model.User, error) {
 
 func (db *Database) GetUserByYandexID(yandexID string) (*model.User, error) {
 	var user model.User
-	query := `SELECT id, username, email, google_id, yandex_id, ranking, password_bcrypt FROM users WHERE yandex_id = $1`
+	query := `SELECT id, username, email, ranking, password_bcrypt FROM users WHERE yandex_id = $1`
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
 	defer cancel()
 	err := db.pool.QueryRow(ctx, query, yandexID).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,
-		&user.GoogleID,
-		&user.YandexID,
+		&user.Ranking,
+		&user.PasswordBcrypt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, apierror.ErrorUserNotFound
+	}
+	return &user, err
+}
+
+func (db *Database) GetUserByGithubID(githubID string) (*model.User, error) {
+	var user model.User
+	query := `SELECT id, username, email, ranking, password_bcrypt FROM users WHERE github_id = $1`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	err := db.pool.QueryRow(ctx, query, githubID).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
 		&user.Ranking,
 		&user.PasswordBcrypt,
 	)

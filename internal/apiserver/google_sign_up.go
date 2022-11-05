@@ -62,7 +62,7 @@ func googleOauth(api *APIServer, c *gin.Context, service config.OauthService, pl
 		return
 	}
 	username := strings.TrimSuffix(googleUser.Email, "@gmail.com")
-	user, err := api.db.CreateUserOauth(username, googleUser.Email, googleUser.GoogleID, config.Google)
+	user, err := api.db.CreateUserOauth(username, &googleUser.Email, googleUser.GoogleID, config.Google)
 	if err != nil {
 		if errors.Is(err, apierror.ErrorEmailIsTaken) {
 			c.JSON(http.StatusBadRequest, &apierror.Error{

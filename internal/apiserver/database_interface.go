@@ -10,7 +10,7 @@ type Database interface {
 	CreateUser(username, email, passwordBcrypt string) (*model.User, error)
 
 	// Create new user from oauth.
-	CreateUserOauth(username, email, oauthID string, oauthSerivce config.OauthService) (*model.User, error)
+	CreateUserOauth(username string, email *string, oauthID string, oauthSerivce config.OauthService) (*model.User, error)
 
 	// Get user by login.
 	GetUserByLogin(login string) (*model.User, error)

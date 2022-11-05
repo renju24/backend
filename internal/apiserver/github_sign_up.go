@@ -14,13 +14,13 @@ import (
 	"github.com/renju24/backend/internal/pkg/config"
 )
 
-type yandexUserInfo struct {
-	YandexID string `json:"id"`
-	Username string `json:"login"`
-	Email    string `json:"default_email"`
+type githubUserInfo struct {
+	GithubID int64   `json:"id"`
+	Username string  `json:"login"`
+	Email    *string `json:"email"`
 }
 
-func yandexOauth(api *APIServer, c *gin.Context, service config.OauthService, platform config.Platform) {
+func githubOauth(api *APIServer, c *gin.Context, service config.OauthService, platform config.Platform) {
 	oauthConfig, err := oauthConfig(api, service, platform)
 	if err != nil {
 		api.logger.Err(err).Send()
@@ -36,7 +36,7 @@ func yandexOauth(api *APIServer, c *gin.Context, service config.OauthService, pl
 		})
 		return
 	}
-	req, err := http.NewRequest(http.MethodGet, api.config.Oauth2.Yandex.API, nil)
+	req, err := http.NewRequest(http.MethodGet, api.config.Oauth2.Github.API, nil)
 	if err != nil {
 		api.logger.Err(err).Send()
 		c.JSON(http.StatusBadRequest, &apierror.Error{
@@ -44,7 +44,7 @@ func yandexOauth(api *APIServer, c *gin.Context, service config.OauthService, pl
 		})
 		return
 	}
-	req.Header.Set("Authorization", "OAuth "+token.AccessToken)
+	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
 		api.logger.Err(err).Send()
@@ -62,15 +62,16 @@ func yandexOauth(api *APIServer, c *gin.Context, service config.OauthService, pl
 		})
 		return
 	}
-	var yandexUser yandexUserInfo
-	if err = json.Unmarshal(data, &yandexUser); err != nil {
+	var githubUser githubUserInfo
+	if err = json.Unmarshal(data, &githubUser); err != nil {
 		api.logger.Err(err).Send()
 		c.JSON(http.StatusBadRequest, &apierror.Error{
 			Error: apierror.ErrorInternal,
 		})
 		return
 	}
-	user, err := api.db.CreateUserOauth(yandexUser.Username, &yandexUser.Email, yandexUser.YandexID, config.Yandex)
+	githubID := strconv.FormatInt(githubUser.GithubID, 10)
+	user, err := api.db.CreateUserOauth(githubUser.Username, githubUser.Email, githubID, config.Github)
 	if err != nil {
 		if errors.Is(err, apierror.ErrorEmailIsTaken) {
 			c.JSON(http.StatusBadRequest, &apierror.Error{
@@ -96,7 +97,7 @@ func yandexOauth(api *APIServer, c *gin.Context, service config.OauthService, pl
 		return
 	}
 	switch oauthConfig.RedirectURL {
-	case api.config.Oauth2.Yandex.Callbacks.Android:
+	case api.config.Oauth2.Github.Callbacks.Android:
 		deepLink := api.config.Oauth2.DeepLinks.Android + "?token=" + jwtToken
 		c.Redirect(http.StatusMovedPermanently, deepLink)
 		return

@@ -31,6 +31,7 @@ type Config struct {
 		DeepLinks OauthRedirects `json:"deep_links"`
 		Google    OauthConfig    `json:"google"`
 		Yandex    OauthConfig    `json:"yandex"`
+		Github    OauthConfig    `json:"github"`
 	} `json:"oauth2"`
 }
 
@@ -47,6 +48,7 @@ type OauthService string
 const (
 	Google OauthService = "google"
 	Yandex OauthService = "yandex"
+	Github OauthService = "github"
 )
 
 type OauthConfig struct {
