@@ -122,8 +122,8 @@ func oauth2Login(api *APIServer) gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
-		authPage := oauthCfg.AuthCodeURL("state")
-		c.Redirect(http.StatusMovedPermanently, authPage)
+		authPage := oauthCfg.AuthCodeURL("c5ae9e1e63e14761a2933110db39fb3a")
+		c.Redirect(http.StatusFound, authPage)
 	}
 }
 

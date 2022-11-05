@@ -90,7 +90,7 @@ func googleOauth(api *APIServer, c *gin.Context, service config.OauthService, pl
 	switch oauthConfig.RedirectURL {
 	case api.config.Oauth2.Google.Callbacks.Android:
 		deepLink := api.config.Oauth2.DeepLinks.Android + "?token=" + jwtToken
-		c.Redirect(http.StatusMovedPermanently, deepLink)
+		c.Redirect(http.StatusFound, deepLink)
 		return
 	default:
 		c.SetCookie(
@@ -102,7 +102,7 @@ func googleOauth(api *APIServer, c *gin.Context, service config.OauthService, pl
 			api.config.Server.Token.Cookie.Secure,
 			api.config.Server.Token.Cookie.HttpOnly,
 		)
-		c.Redirect(http.StatusMovedPermanently, api.config.Oauth2.DeepLinks.Web)
+		c.Redirect(http.StatusFound, api.config.Oauth2.DeepLinks.Web)
 		return
 	}
 }
