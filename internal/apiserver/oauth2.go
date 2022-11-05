@@ -50,17 +50,6 @@ func oauth2Services(api *APIServer) gin.HandlerFunc {
 					},
 				},
 				{
-					Name: oauth.Github,
-					Web: imageAndURL{
-						Image: "",
-						URL:   strings.TrimSuffix(api.config.Oauth2.Github.Callbacks.Web, "/callback"),
-					},
-					Android: imageAndURL{
-						Image: "",
-						URL:   strings.TrimSuffix(api.config.Oauth2.Github.Callbacks.Android, "/callback"),
-					},
-				},
-				{
 					Name: oauth.VK,
 					Web: imageAndURL{
 						Image: "",
@@ -135,8 +124,6 @@ func oauth2Callback(api *APIServer) gin.HandlerFunc {
 			oauthUser, err = oauth.GoogleOauth(api.config.Oauth2, code, service, platform)
 		case oauth.Yandex:
 			oauthUser, err = oauth.YandexOauth(api.config.Oauth2, code, service, platform)
-		case oauth.Github:
-			oauthUser, err = oauth.GithubOauth(api.config.Oauth2, code, service, platform)
 		case oauth.VK:
 			oauthUser, err = oauth.VKOauth(api.config.Oauth2, code, service, platform)
 		}

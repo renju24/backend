@@ -100,9 +100,6 @@ func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configRead
 		<a href="/api/v1/oauth2/web/vk" style="outline: none;text-decoration: none;">
 			<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/VK_Compact_Logo_%282021-present%29.svg/2048px-VK_Compact_Logo_%282021-present%29.svg.png" width="30px" style="margin:10px;">
 		</a>
-		<a href="/api/v1/oauth2/web/github" style="outline: none;text-decoration: none;">
-			<img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" width="30px" style="margin:10px;">
-		</a>
 	{{ end }}
 
 	{{ define "authorized.html" }}

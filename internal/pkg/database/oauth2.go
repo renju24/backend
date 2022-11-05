@@ -20,8 +20,6 @@ func (db *Database) createUserOauth(username string, email *string, oauthID stri
 		query = fmt.Sprintf(query, "google_id")
 	case oauth.Yandex:
 		query = fmt.Sprintf(query, "yandex_id")
-	case oauth.Github:
-		query = fmt.Sprintf(query, "github_id")
 	case oauth.VK:
 		query = fmt.Sprintf(query, "vk_id")
 	default:
@@ -46,8 +44,6 @@ func (db *Database) createUserOauth(username string, email *string, oauthID stri
 					return db.getUserByOauthUserID(oauthID, oauth.Google)
 				case "unique_yandex_id":
 					return db.getUserByOauthUserID(oauthID, oauth.Yandex)
-				case "unique_github_id":
-					return db.getUserByOauthUserID(oauthID, oauth.Github)
 				case "unique_vk_id":
 					return db.getUserByOauthUserID(oauthID, oauth.VK)
 				case "unique_username":
@@ -70,8 +66,6 @@ func (db *Database) getUserByOauthUserID(oauthID string, service oauth.Service) 
 		query = fmt.Sprintf(query, "google_id")
 	case oauth.Yandex:
 		query = fmt.Sprintf(query, "yandex_id")
-	case oauth.Github:
-		query = fmt.Sprintf(query, "github_id")
 	case oauth.VK:
 		query = fmt.Sprintf(query, "vk_id")
 	default:

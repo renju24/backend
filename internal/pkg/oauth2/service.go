@@ -9,7 +9,6 @@ type Service string
 const (
 	Google Service = "google"
 	Yandex Service = "yandex"
-	Github Service = "github"
 	VK     Service = "vk"
 )
 
@@ -19,8 +18,6 @@ func ParseService(s string) (Service, error) {
 		return Google, nil
 	case "yandex":
 		return Yandex, nil
-	case "github":
-		return Github, nil
 	case "vk":
 		return VK, nil
 	}

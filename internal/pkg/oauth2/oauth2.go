@@ -3,7 +3,6 @@ package oauth2
 import (
 	"github.com/renju24/backend/internal/pkg/config"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/vk"
 	"golang.org/x/oauth2/yandex"
@@ -43,20 +42,6 @@ func OauthConfig(providers config.OauthConfig, service Service, platform Platfor
 			cfg.RedirectURL = providers.Yandex.Callbacks.Web
 		case Android:
 			cfg.RedirectURL = providers.Yandex.Callbacks.Android
-		}
-		return cfg, nil
-	case Github:
-		cfg := &oauth2.Config{
-			ClientID:     providers.Github.ClientID,
-			ClientSecret: providers.Github.ClientSecret,
-			Scopes:       providers.Github.Scopes,
-			Endpoint:     github.Endpoint,
-		}
-		switch platform {
-		case Web:
-			cfg.RedirectURL = providers.Github.Callbacks.Web
-		case Android:
-			cfg.RedirectURL = providers.Github.Callbacks.Android
 		}
 		return cfg, nil
 	case VK:
