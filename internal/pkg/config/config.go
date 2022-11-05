@@ -32,6 +32,7 @@ type Config struct {
 		Google    OauthConfig    `json:"google"`
 		Yandex    OauthConfig    `json:"yandex"`
 		Github    OauthConfig    `json:"github"`
+		VK        OauthConfig    `json:"vk"`
 	} `json:"oauth2"`
 }
 
@@ -49,6 +50,7 @@ const (
 	Google OauthService = "google"
 	Yandex OauthService = "yandex"
 	Github OauthService = "github"
+	VK     OauthService = "vk"
 )
 
 type OauthConfig struct {

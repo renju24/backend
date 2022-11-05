@@ -9,4 +9,5 @@ type User struct {
 	GoogleID       *string `json:"-"`
 	YandexID       *string `json:"-"`
 	GithubID       *string `json:"-"`
+	VKID           *string `json:"-"`
 }
