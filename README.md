@@ -8,17 +8,17 @@ HTTP REST API используется только для следующих з
 2. Авторизация: ```POST https://renju24.com/api/v1/sign_in```
 3. Пинг сервера: ```GET https://renju24.com/api/v1/ping```
 
-Также поддерживается Oauth2 авторизация:
+Также поддерживается OAauth2 авторизация:
 
 Web:
 
-1. Через Google: ```GET https://renju24.com/api/v1/oauth2/login/web/google```
-2. Через Яндекс: ```GET https://renju24.com/api/v1/oauth2/login/web/yandex```
+1. Через Google: ```GET https://renju24.com/api/v1/oauth2/web/google```
+2. Через Яндекс: ```GET https://renju24.com/api/v1/oauth2/web/yandex```
 
 Android:
 
-1. Через Google: ```GET https://renju24.com/api/v1/oauth2/login/android/google```
-2. Через Яндекс: ```GET https://renju24.com/api/v1/oauth2/login/android/yandex```
+1. Через Google: ```GET https://renju24.com/api/v1/oauth2/android/google```
+2. Через Яндекс: ```GET https://renju24.com/api/v1/oauth2/android/yandex```
 
 После успешной регистрации/авторизации и получения токена нужно установить WebSocket-соединение с сервером и дальше общаться через него.
 
