@@ -89,6 +89,7 @@ func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configRead
 		apiRoutes.POST("/sign_up", signUp(a))
 		apiRoutes.POST("/sign_in", signIn(a))
 		apiRoutes.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "PONG") })
+		apiRoutes.GET("/oauth2/services", oauth2Services(a))
 		apiRoutes.GET("/oauth2/:platform/:service", oauth2Login(a))
 		apiRoutes.GET("/oauth2/:platform/:service/callback", oauth2Callback(a))
 	}

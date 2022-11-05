@@ -3,6 +3,7 @@ package apiserver
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/renju24/backend/internal/pkg/config"
@@ -11,6 +12,61 @@ import (
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/yandex"
 )
+
+// TODO: hard code.
+func oauth2Services(api *APIServer) gin.HandlerFunc {
+	type imageAndURL struct {
+		Image string `json:"image"`
+		URL   string `json:"url"`
+	}
+	type service struct {
+		Name    config.OauthService `json:"name"`
+		Web     imageAndURL         `json:"web"`
+		Android imageAndURL         `json:"android"`
+	}
+	type response struct {
+		Services []service `json:"services"`
+	}
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, &response{
+			Services: []service{
+				{
+					Name: config.Google,
+					Web: imageAndURL{
+						Image: "",
+						URL:   strings.TrimSuffix(api.config.Oauth2.Google.Callbacks.Web, "/callback"),
+					},
+					Android: imageAndURL{
+						Image: "",
+						URL:   strings.TrimSuffix(api.config.Oauth2.Google.Callbacks.Android, "/callback"),
+					},
+				},
+				{
+					Name: config.Yandex,
+					Web: imageAndURL{
+						Image: "",
+						URL:   strings.TrimSuffix(api.config.Oauth2.Yandex.Callbacks.Web, "/callback"),
+					},
+					Android: imageAndURL{
+						Image: "",
+						URL:   strings.TrimSuffix(api.config.Oauth2.Yandex.Callbacks.Android, "/callback"),
+					},
+				},
+				{
+					Name: config.Github,
+					Web: imageAndURL{
+						Image: "",
+						URL:   strings.TrimSuffix(api.config.Oauth2.Github.Callbacks.Web, "/callback"),
+					},
+					Android: imageAndURL{
+						Image: "",
+						URL:   strings.TrimSuffix(api.config.Oauth2.Github.Callbacks.Android, "/callback"),
+					},
+				},
+			},
+		})
+	}
+}
 
 func oauth2Login(api *APIServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
