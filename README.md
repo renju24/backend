@@ -6,21 +6,8 @@ Backend состоит из:
 HTTP REST API используется только для следующих задач:
 1. Регистрация: ```POST https://renju24.com/api/v1/sign_up```
 2. Авторизация: ```POST https://renju24.com/api/v1/sign_in```
-3. Пинг сервера: ```GET https://renju24.com/api/v1/ping```
-
-Также поддерживается OAauth2 авторизация:
-
-Web:
-
-1. Через Google: ```GET https://renju24.com/api/v1/oauth2/web/google```
-2. Через Яндекс: ```GET https://renju24.com/api/v1/oauth2/web/yandex```
-3. Через GitHub: ```GET https://renju24.com/api/v1/oauth2/web/github```
-
-Android:
-
-1. Через Google: ```GET https://renju24.com/api/v1/oauth2/android/google```
-2. Через Яндекс: ```GET https://renju24.com/api/v1/oauth2/android/yandex```
-3. Через GitHub: ```GET https://renju24.com/api/v1/oauth2/android/github```
+3. OAuth2 авторизация: ```GET https://renju24.com/api/v1/oauth2/<platform>/<service>```
+4. Пинг сервера: ```GET https://renju24.com/api/v1/ping```
 
 После успешной регистрации/авторизации и получения токена нужно установить WebSocket-соединение с сервером и дальше общаться через него.
 
