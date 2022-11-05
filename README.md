@@ -14,11 +14,13 @@ Web:
 
 1. Через Google: ```GET https://renju24.com/api/v1/oauth2/web/google```
 2. Через Яндекс: ```GET https://renju24.com/api/v1/oauth2/web/yandex```
+3. Через GitHub: ```GET https://renju24.com/api/v1/oauth2/web/github```
 
 Android:
 
 1. Через Google: ```GET https://renju24.com/api/v1/oauth2/android/google```
 2. Через Яндекс: ```GET https://renju24.com/api/v1/oauth2/android/yandex```
+3. Через GitHub: ```GET https://renju24.com/api/v1/oauth2/android/github```
 
 После успешной регистрации/авторизации и получения токена нужно установить WebSocket-соединение с сервером и дальше общаться через него.
 
