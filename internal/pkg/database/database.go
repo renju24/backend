@@ -87,7 +87,7 @@ func (db *Database) CreateUser(username, email, passwordBcrypt string) (*model.U
 }
 
 func (db *Database) CreateUserOauth(username string, email *string, oauthID string, service oauth.Service) (*model.User, error) {
-	return db.createUserOauth(username, email, oauthID, service, 0)
+	return db.createUserOauth(username, email, oauthID, service)
 }
 
 func (db *Database) GetUserByLogin(login string) (*model.User, error) {

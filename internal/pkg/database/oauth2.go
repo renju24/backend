@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
@@ -13,7 +15,7 @@ import (
 	"github.com/renju24/backend/model"
 )
 
-func (db *Database) createUserOauth(username string, email *string, oauthID string, service oauth.Service, i int) (*model.User, error) {
+func (db *Database) createUserOauth(username string, email *string, oauthID string, service oauth.Service) (*model.User, error) {
 	query := `INSERT INTO users (username, email, %s) VALUES ($1, $2, $3) RETURNING id, ranking;`
 	switch service {
 	case oauth.Google:
@@ -24,9 +26,6 @@ func (db *Database) createUserOauth(username string, email *string, oauthID stri
 		query = fmt.Sprintf(query, "vk_id")
 	default:
 		return nil, oauth.ErrUnknownService
-	}
-	if i > 0 {
-		username = fmt.Sprintf("%s-%d", username, i)
 	}
 	user := model.User{
 		Username: username,
@@ -47,8 +46,24 @@ func (db *Database) createUserOauth(username string, email *string, oauthID stri
 				case "unique_vk_id":
 					return db.getUserByOauthUserID(oauthID, oauth.VK)
 				case "unique_username":
-					// if username is already taken then increment it.
-					return db.createUserOauth(username, email, oauthID, service, i+1)
+					// if username is already taken, then select last username and increment it.
+					var lastUsername string
+					query = `SELECT username FROM users WHERE username LIKE $1 ORDER BY username DESC LIMIT 1;`
+					if err = db.pool.QueryRow(ctx, query, username+"%").Scan(&lastUsername); err != nil {
+						return nil, err
+					}
+					lastUsername = strings.TrimPrefix(lastUsername, username)
+					lastUsername = strings.TrimPrefix(lastUsername, "-")
+					lastUsername = strings.TrimSpace(lastUsername)
+					var i int64
+					if lastUsername != "" {
+						i, err = strconv.ParseInt(lastUsername, 10, 64)
+						if err != nil {
+							return nil, err
+						}
+					}
+					username = fmt.Sprintf("%s-%d", username, i+1)
+					return db.createUserOauth(username, email, oauthID, service)
 				case "unique_email":
 					return nil, apierror.ErrorEmailIsTaken
 				}

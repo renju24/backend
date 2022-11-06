@@ -3,6 +3,7 @@ package apiserver
 import (
 	"errors"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
@@ -98,6 +99,11 @@ func signUp(api *APIServer) gin.HandlerFunc {
 	}
 }
 
+var (
+	rgxUsername = regexp.MustCompile(`^[a-z0-9_.]*$`)
+	rgxPassword = regexp.MustCompile(`^[a-zA-Z0-9]*$`)
+)
+
 func (req *signupRequest) Validate() *centrifuge.Error {
 	req.Username = strings.TrimSpace(req.Username)
 	req.Email = strings.TrimSpace(req.Email)
@@ -107,6 +113,8 @@ func (req *signupRequest) Validate() *centrifuge.Error {
 	if req.Email == "" {
 		return apierror.ErrorEmailIsRequired
 	}
+	req.Username = strings.ToLower(req.Username)
+	req.Email = strings.ToLower(req.Email)
 	if req.Password == "" {
 		return apierror.ErrorPasswordIsRequired
 	}
@@ -116,6 +124,9 @@ func (req *signupRequest) Validate() *centrifuge.Error {
 	usernameLength := utf8.RuneCountInString(req.Username)
 	if usernameLength < 4 || usernameLength > 32 {
 		return apierror.ErrorInvalidUsernameLength
+	}
+	if !rgxUsername.MatchString(req.Username) {
+		return apierror.ErrorInvalidUsernameCharacter
 	}
 	emailLength := utf8.RuneCountInString(req.Email)
 	if emailLength < 5 || emailLength > 84 {
@@ -127,6 +138,9 @@ func (req *signupRequest) Validate() *centrifuge.Error {
 	passwordLength := utf8.RuneCountInString(req.Password)
 	if passwordLength < 8 || passwordLength > 64 {
 		return apierror.ErrorInvalidPasswordLength
+	}
+	if !rgxPassword.MatchString(req.Password) {
+		return apierror.ErrorInvalidPasswordCharacter
 	}
 
 	var (
