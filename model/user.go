@@ -8,6 +8,5 @@ type User struct {
 	PasswordBcrypt *string `json:"-"`
 	GoogleID       *string `json:"-"`
 	YandexID       *string `json:"-"`
-	GithubID       *string `json:"-"`
 	VKID           *string `json:"-"`
 }
