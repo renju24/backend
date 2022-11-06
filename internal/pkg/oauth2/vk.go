@@ -18,7 +18,6 @@ type vkResponse struct {
 type vkUserInfo struct {
 	VkID     int64   `json:"id"`
 	Username *string `json:"screen_name"`
-	Email    *string `json:"email"`
 }
 
 func VKOauth(providers config.OauthConfig, code string, service Service, platform Platform) (*User, error) {
@@ -29,6 +28,13 @@ func VKOauth(providers config.OauthConfig, code string, service Service, platfor
 	token, err := oauthConfig.Exchange(context.Background(), code)
 	if err != nil {
 		return nil, err
+	}
+	var email *string
+	if emailExtra := token.Extra("email"); emailExtra != nil {
+		v, ok := emailExtra.(string)
+		if ok {
+			email = &v
+		}
 	}
 	response, err := http.Get(providers.VK.API + token.AccessToken)
 	if err != nil {
@@ -55,6 +61,6 @@ func VKOauth(providers config.OauthConfig, code string, service Service, platfor
 	return &User{
 		ID:       vkUserID,
 		Username: username,
-		Email:    vkUser.Email,
+		Email:    email,
 	}, nil
 }
