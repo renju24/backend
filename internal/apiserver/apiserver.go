@@ -1,17 +1,15 @@
 package apiserver
 
 import (
-	"context"
 	"html/template"
+	"log"
+	"net"
 	"net/http"
-	"os/signal"
 	"strconv"
-	"syscall"
 
 	"github.com/armantarkhanian/jwt"
 	"github.com/armantarkhanian/websocket"
 	"github.com/centrifugal/centrifuge"
-	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/renju24/backend/internal/pkg/apierror"
 	"github.com/renju24/backend/internal/pkg/config"
@@ -31,12 +29,25 @@ type APIServer struct {
 	ConfigReader
 }
 
+func redirectToTls(w http.ResponseWriter, r *http.Request) {
+	host, _, _ := net.SplitHostPort(r.Host)
+	u := r.URL
+	u.Host = net.JoinHostPort(host, ":443")
+	u.Scheme = "https"
+	log.Println(u.String())
+	http.Redirect(w, r, u.String(), http.StatusMovedPermanently)
+}
+
 // Run runs the HTTP server.
 func (a *APIServer) Run(port, runMode string) error {
 	if runMode == "prod" {
-		ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-		defer stop()
-		return autotls.RunWithContext(ctx, a.router, a.config.Server.Token.Cookie.Domain)
+		go func() {
+			if err := http.ListenAndServe(":80", http.HandlerFunc(redirectToTls)); err != nil {
+				a.logger.Fatal().Err(err).Send()
+			}
+		}()
+
+		return a.router.RunTLS(":443", "./cert.crt", "./private.key")
 	} else {
 		return a.router.Run(port)
 	}
