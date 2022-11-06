@@ -2,8 +2,6 @@ package apiserver
 
 import (
 	"html/template"
-	"log"
-	"net"
 	"net/http"
 	"strconv"
 
@@ -30,12 +28,7 @@ type APIServer struct {
 }
 
 func redirectToTls(w http.ResponseWriter, r *http.Request) {
-	host, _, _ := net.SplitHostPort(r.Host)
-	u := r.URL
-	u.Host = net.JoinHostPort(host, ":443")
-	u.Scheme = "https"
-	log.Println(u.String())
-	http.Redirect(w, r, u.String(), http.StatusMovedPermanently)
+	http.Redirect(w, r, "https://"+r.Host+r.RequestURI, http.StatusMovedPermanently)
 }
 
 // Run runs the HTTP server.
