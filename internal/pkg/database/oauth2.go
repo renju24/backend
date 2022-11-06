@@ -65,6 +65,7 @@ func (db *Database) createUserOauth(username string, email *string, oauthID stri
 					username = fmt.Sprintf("%s-%d", username, i+1)
 					return db.createUserOauth(username, email, oauthID, service)
 				case "unique_email":
+					// TODO: what to do if email is already taken when using OAuth2 authorization.
 					return nil, apierror.ErrorEmailIsTaken
 				}
 			}
