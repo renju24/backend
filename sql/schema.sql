@@ -24,6 +24,7 @@ CREATE TABLE games (
 	black_user_id   INT          NOT NULL REFERENCES users(id),
 	white_user_id   INT          NOT NULL REFERENCES users(id),
 	winner_id       INT          NULL     REFERENCES users(id),
+	status          INT          NOT NULL,
 	started_at      TIMESTAMP(0) NULL,
 	finished_at     TIMESTAMP(0) NULL
 );
