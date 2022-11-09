@@ -43,6 +43,13 @@ func signIn(api *APIServer) gin.HandlerFunc {
 			})
 			return
 		}
+		// if user does not have password_bcrypt, it means he signed up using OAuth2 provider, so return error.
+		if user.PasswordBcrypt == nil {
+			c.JSON(http.StatusBadRequest, &apierror.Error{
+				Error: apierror.ErrorInvalidCredentials,
+			})
+			return
+		}
 		if bcrypt.CompareHashAndPassword([]byte(*user.PasswordBcrypt), []byte(req.Password)) != nil {
 			c.JSON(http.StatusBadRequest, &apierror.Error{
 				Error: apierror.ErrorInvalidCredentials,
