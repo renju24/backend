@@ -45,31 +45,14 @@ var (
 	ErrCoordinatesOutside        = errors.New("coordinates outside the board")
 	ErrFieldAlreadyTaken         = errors.New("field is already taken")
 	ErrInvalidTurn               = errors.New("invalid turn")
+	ErrRow6IsBannedForBlack      = errors.New("black player cannot make row of length 6")
 )
 
 func (g *Game) ApplyMove(move Move) (winner Color, err error) {
-	// If it's the first move, then user should be black and move should be in board's center.
-	if g.lastMove.color == Nil {
-		if move.color != Black {
-			return Nil, ErrFirstMoveShouldBeBlack
-		}
-		if move.x != 7 || move.y != 7 {
-			return Nil, ErrFirstMoveShouldBeInCenter
-		}
+	e := g.checkMoveIsCorrect(move)
+	if e != nil {
+		return Nil, e
 	}
-	// Check the coordinates are not outside the board.
-	if move.x >= BoardSize || move.x < 0 || move.y >= BoardSize || move.y < 0 {
-		return Nil, ErrCoordinatesOutside
-	}
-	// Check the field is not already taken.
-	if g.board[move.x*BoardSize+move.y] != Nil {
-		return Nil, ErrFieldAlreadyTaken
-	}
-	// Check the last move was made by another player.
-	if g.lastMove.color == move.color {
-		return Nil, ErrInvalidTurn
-	}
-
 	// Apply the move and change the board.
 	g.board[move.x*BoardSize+move.y] = move.color
 	g.lastMove = move
@@ -80,6 +63,31 @@ func (g *Game) ApplyMove(move Move) (winner Color, err error) {
 	}
 
 	return Nil, nil
+}
+
+func (g *Game) checkMoveIsCorrect(move Move) error {
+	// If it's the first move, then user should be black and move should be in board's center.
+	if g.lastMove.color == Nil {
+		if move.color != Black {
+			return ErrFirstMoveShouldBeBlack
+		}
+		if move.x != 7 || move.y != 7 {
+			return ErrFirstMoveShouldBeInCenter
+		}
+	}
+	// Check the coordinates are not outside the board.
+	if move.x >= BoardSize || move.x < 0 || move.y >= BoardSize || move.y < 0 {
+		return ErrCoordinatesOutside
+	}
+	// Check the field is not already taken.
+	if g.board[move.x*BoardSize+move.y] != Nil {
+		return ErrFieldAlreadyTaken
+	}
+	// Check the last move was made by another player.
+	if g.lastMove.color == move.color {
+		return ErrInvalidTurn
+	}
+	return nil
 }
 
 func (game *Game) hasWinner() bool {
