@@ -148,6 +148,7 @@ func (g *Game) maxRowAfterMove(move Move) int {
 	return maxLength
 }
 
+// should be deleted as maxRowAfterMove() does the same better
 func (game *Game) hasWinner() bool {
 	var xcount, ycount, zcount int
 	x, y := game.lastMove.x, game.lastMove.y
