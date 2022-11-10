@@ -5,6 +5,7 @@ import (
 )
 
 const BoardSize = 15
+const MaxBoardIndex = BoardSize*BoardSize - 1
 
 // Move structure.
 type Move struct {
@@ -20,6 +21,15 @@ const (
 	Black Color = 1
 	White Color = 2
 )
+
+const (
+	diagonalOffsetL  = BoardSize + 1 // "\"
+	diagonalOffsetR  = BoardSize - 1 // "/"
+	verticalOffset   = BoardSize     // "|"
+	horizontalOffset = 1             // "-"
+)
+
+var allDirectionOffsets = []int{verticalOffset, horizontalOffset, diagonalOffsetL, diagonalOffsetR}
 
 func NewMove(x, y int, color Color) Move {
 	return Move{
@@ -48,17 +58,39 @@ var (
 	ErrRow6IsBannedForBlack      = errors.New("black player cannot make row of length 6")
 )
 
+func (g *Game) getColorAt(x, y int) (Color, error) {
+	if x >= BoardSize || x < 0 || y >= BoardSize || y < 0 {
+		return Nil, ErrCoordinatesOutside
+	}
+	return g.board[x*BoardSize+y], nil
+}
+
+func (g *Game) setColorAt(x, y int, c Color) error {
+	if x >= BoardSize || x < 0 || y >= BoardSize || y < 0 {
+		return ErrCoordinatesOutside
+	}
+	g.board[x*BoardSize+y] = c
+	return nil
+}
+
 func (g *Game) ApplyMove(move Move) (winner Color, err error) {
 	e := g.checkMoveIsCorrect(move)
 	if e != nil {
 		return Nil, e
 	}
+
+	lastMoveLength := g.maxRowAfterMove(move)
+
+	if lastMoveLength > 5 && move.color == Black {
+		return Nil, ErrRow6IsBannedForBlack
+	}
+
 	// Apply the move and change the board.
-	g.board[move.x*BoardSize+move.y] = move.color
+	g.setColorAt(move.x, move.y, move.color)
 	g.lastMove = move
 
 	// After a successful move, we should check if there is a winner.
-	if g.hasWinner() {
+	if lastMoveLength >= 5 { //if row has length 5 or greater then player wins (if all rules above are passed)
 		return g.lastMove.color, nil
 	}
 
@@ -75,12 +107,15 @@ func (g *Game) checkMoveIsCorrect(move Move) error {
 			return ErrFirstMoveShouldBeInCenter
 		}
 	}
+
+	c, err := g.getColorAt(move.x, move.y)
+
 	// Check the coordinates are not outside the board.
-	if move.x >= BoardSize || move.x < 0 || move.y >= BoardSize || move.y < 0 {
+	if err != nil {
 		return ErrCoordinatesOutside
 	}
 	// Check the field is not already taken.
-	if g.board[move.x*BoardSize+move.y] != Nil {
+	if c != Nil {
 		return ErrFieldAlreadyTaken
 	}
 	// Check the last move was made by another player.
@@ -88,6 +123,29 @@ func (g *Game) checkMoveIsCorrect(move Move) error {
 		return ErrInvalidTurn
 	}
 	return nil
+}
+
+func (g *Game) maxRowAfterMove(move Move) int {
+	startIndex := move.x*BoardSize + move.y
+	maxLength := 1
+
+	for _, offset := range allDirectionOffsets {
+		curIndex := startIndex - offset
+		curLength := 1
+		for curIndex >= 0 && g.board[curIndex] == move.color {
+			curLength++
+			curIndex -= offset
+		}
+		curIndex = startIndex + offset
+		for curIndex <= MaxBoardIndex && g.board[curIndex] == move.color {
+			curLength++
+			curIndex += offset
+		}
+		if curLength > maxLength {
+			maxLength = curLength
+		}
+	}
+	return maxLength
 }
 
 func (game *Game) hasWinner() bool {

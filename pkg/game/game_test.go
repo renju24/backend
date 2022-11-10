@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -102,14 +103,32 @@ func TestGame(t *testing.T) {
 			expectedWinner: White,
 			expectedError:  nil,
 		},
+		{
+			moves: []Move{
+				NewMove(7, 7, Black),
+				NewMove(4, 4, White),
+				NewMove(7, 6, Black),
+				NewMove(4, 3, White),
+				NewMove(7, 5, Black),
+				NewMove(1, 1, White),
+				NewMove(7, 9, Black),
+				NewMove(1, 2, White),
+				NewMove(7, 10, Black),
+				NewMove(1, 3, White),
+				NewMove(7, 8, Black),
+			},
+			expectedWinner: Nil,
+			expectedError:  ErrRow6IsBannedForBlack,
+		},
 	}
-	for _, testCase := range testCases {
+	for testCaseNum, testCase := range testCases {
 		game := NewGame()
 		for i, move := range testCase.moves {
 			actualWinner, actualErr := game.ApplyMove(move)
 			if i+1 == len(testCase.moves) {
 				require.Equal(t, testCase.expectedWinner, actualWinner)
 				require.ErrorIs(t, testCase.expectedError, actualErr)
+				fmt.Printf("testcase %d passed\n", testCaseNum)
 			} else {
 				require.Equal(t, Nil, actualWinner)
 				require.NoError(t, actualErr)
