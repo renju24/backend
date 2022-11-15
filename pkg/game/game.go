@@ -55,7 +55,8 @@ var (
 	ErrCoordinatesOutside        = errors.New("coordinates outside the board")
 	ErrFieldAlreadyTaken         = errors.New("field is already taken")
 	ErrInvalidTurn               = errors.New("invalid turn")
-	ErrRow6IsBannedForBlack      = errors.New("black player cannot make row of length 6")
+	ErrRow6IsBannedForBlack      = errors.New("black player cannot make row of length 6 and greater")
+	ErrInvalidForkForBlack       = errors.New("black can make only 3x4 forks")
 )
 
 func (g *Game) getColorAt(x, y int) (Color, error) {
@@ -122,7 +123,17 @@ func (g *Game) checkMoveIsCorrect(move Move) error {
 	if g.lastMove.color == move.color {
 		return ErrInvalidTurn
 	}
+
+	forks := countForksAfterMove(move)
+	if len(forks) > 2 || (len(forks) == 2 && forks[0]*forks[1] != 12) {
+		return ErrInvalidForkForBlack
+	}
+
 	return nil
+}
+
+func countForksAfterMove(m Move) []int {
+	return []int{} //TODO
 }
 
 func (g *Game) maxRowAfterMove(move Move) int {
@@ -146,70 +157,4 @@ func (g *Game) maxRowAfterMove(move Move) int {
 		}
 	}
 	return maxLength
-}
-
-// should be deleted as maxRowAfterMove() does the same better
-func (game *Game) hasWinner() bool {
-	var xcount, ycount, zcount int
-	x, y := game.lastMove.x, game.lastMove.y
-	x2, y2 := game.lastMove.x, game.lastMove.y
-	if game.lastMove.color == Nil {
-		return false
-	}
-	for i := 0; i < BoardSize; i++ {
-		// "-"
-		if xcount == 5 {
-			return true
-		}
-		if game.board[x*BoardSize+i] == game.lastMove.color {
-			xcount++
-		} else {
-			xcount = 0
-		}
-		// "|"
-		if ycount == 5 {
-			return true
-		}
-		if game.board[i*BoardSize+y] == game.lastMove.color {
-			ycount++
-		} else {
-			ycount = 0
-		}
-	}
-	// "/"
-	for x2 > 0 && y2 < BoardSize {
-		x2--
-		y2++
-	}
-	for x2 < BoardSize && y2 > 0 {
-		if zcount == 5 {
-			return true
-		}
-		if game.board[x2*BoardSize+y2] == game.lastMove.color {
-			zcount++
-		} else {
-			zcount = 0
-		}
-		x2++
-		y2--
-	}
-	zcount = 0
-	// "\"
-	for x > 0 && y > 0 {
-		x--
-		y--
-	}
-	for x < BoardSize && y < BoardSize {
-		if zcount == 5 {
-			return true
-		}
-		if game.board[x*BoardSize+y] == game.lastMove.color {
-			zcount++
-		} else {
-			zcount = 0
-		}
-		x++
-		y++
-	}
-	return false
 }

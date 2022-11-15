@@ -1,12 +1,49 @@
 package game
 
 import (
-	"fmt"
+	"regexp"
+	"strconv"
 	"testing"
+	"unicode"
 
 	"github.com/stretchr/testify/require"
 )
 
+//move is described as 2 chars -- letter as vertical coordinate and digit as horizontal
+//upper-case letter is for black move and lower-case for white move
+//i.e. D14 is black move, d14 is white move
+
+var reg = regexp.MustCompile(`\w\d{1,2}`)
+
+// initializes with specified sequence
+func initGame(iniStr string) *Game {
+	g := NewGame()
+	for _, v := range reg.FindAllString(iniStr, -1) {
+		c := White
+		r := rune(v[0])
+		if unicode.IsUpper(r) {
+			c = Black
+			r = unicode.ToLower(r)
+		}
+		x := int(r - 'a')
+		y, _ := strconv.Atoi(v[1:])
+		g.board[x*BoardSize+y] = c
+		g.lastMove = Move{
+			x:     x,
+			y:     y,
+			color: c,
+		}
+	}
+	return g
+}
+
+func TestGame2(t *testing.T) {
+	g := initGame("A0B1A2A3")
+
+	for _, v := range g.board {
+		t.Logf("%d", int(v))
+	}
+}
 func TestGame(t *testing.T) {
 	testCases := []struct {
 		moves          []Move
@@ -128,7 +165,7 @@ func TestGame(t *testing.T) {
 			if i+1 == len(testCase.moves) {
 				require.Equal(t, testCase.expectedWinner, actualWinner)
 				require.ErrorIs(t, testCase.expectedError, actualErr)
-				fmt.Printf("testcase %d passed\n", testCaseNum)
+				t.Logf("testcase %d passed\n", testCaseNum)
 			} else {
 				require.Equal(t, Nil, actualWinner)
 				require.NoError(t, actualErr)
