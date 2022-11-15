@@ -98,7 +98,7 @@ func (g *Game) ApplyMove(move Move) (winner Color, err error) {
 	return Nil, nil
 }
 
-func (g *Game) checkMoveIsCorrect(move Move) error {
+func (g *Game) CheckMoveIsCorrect(move Move) error {
 	// If it's the first move, then user should be black and move should be in board's center.
 	if g.lastMove.color == Nil {
 		if move.color != Black {
@@ -124,9 +124,11 @@ func (g *Game) checkMoveIsCorrect(move Move) error {
 		return ErrInvalidTurn
 	}
 
-	forks := countForksAfterMove(move)
-	if len(forks) > 2 || (len(forks) == 2 && forks[0]*forks[1] != 12) {
-		return ErrInvalidForkForBlack
+	if move.color == Black { // Check permitted forks for black
+		forks := countForksAfterMove(move)
+		if len(forks) > 2 || (len(forks) == 2 && forks[0]*forks[1] != 12) { // if multiplicity > 2 or not 3x4 fork if multiplicity == 2
+			return ErrInvalidForkForBlack
+		}
 	}
 
 	return nil
