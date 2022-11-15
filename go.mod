@@ -6,6 +6,7 @@ require (
 	github.com/armantarkhanian/jwt v1.9.0
 	github.com/armantarkhanian/websocket v1.1.0
 	github.com/centrifugal/centrifuge v0.26.0
+	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa

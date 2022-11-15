@@ -8,6 +8,7 @@ import (
 	"github.com/armantarkhanian/jwt"
 	"github.com/armantarkhanian/websocket"
 	"github.com/centrifugal/centrifuge"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/renju24/backend/internal/pkg/apierror"
 	"github.com/renju24/backend/internal/pkg/config"
@@ -81,7 +82,8 @@ func initApi(db Database, router *gin.Engine, logger *zerolog.Logger, configRead
 	}
 
 	a.router.Use(
-		corsMiddleware(a),
+		sameSiteMiddleware(a),
+		cors.Default(),
 		loggerMiddleware(a),
 	)
 

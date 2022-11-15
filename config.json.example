@@ -1,11 +1,5 @@
 {
 	"server": {
-		"cors": {
-			"same_site": "strict",
-			"access_control_allow_origin": "*",
-			"access_control_allow_credentials": true
-		},
-
 		"token": {
 			"signing_key": "SECRET KEY",
 			"cookie": {
@@ -14,7 +8,8 @@
 				"path": "/",
 				"domain": "localhost",
 				"secure": false,
-				"http_only": true
+				"http_only": true,
+				"same_site": "lax"
 			},
 			"header": {
 				"name": "Authorization"
@@ -46,6 +41,16 @@
 				"android": "/api/v1/oauth2/android/yandex/callback"
 			},
 			"api_url": "https://login.yandex.ru/info?format=json"
+		},
+		"vk": {
+			"client_id": "<CLIENT_ID>",
+			"client_secret": "<CLIENT_SECRET>",
+			"scopes": [],
+			"callbacks": {
+				"web": "/api/v1/oauth2/web/vk/callback",
+				"android": "/api/v1/oauth2/android/vk/callback"
+			},
+			"api_url": "https://login.vk.ru/info?format=json"
 		}
 	}
 }

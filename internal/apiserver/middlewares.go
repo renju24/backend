@@ -3,27 +3,24 @@ package apiserver
 import (
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-func corsMiddleware(a *APIServer) gin.HandlerFunc {
+func sameSiteMiddleware(a *APIServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		switch a.config.Server.CORS.SameSite {
-		case "default":
+		switch {
+		case strings.EqualFold(a.config.Server.Token.Cookie.SameSite, "default"):
 			c.SetSameSite(http.SameSiteDefaultMode)
-		case "lax":
+		case strings.EqualFold(a.config.Server.Token.Cookie.SameSite, "lax"):
 			c.SetSameSite(http.SameSiteLaxMode)
-		case "strict":
+		case strings.EqualFold(a.config.Server.Token.Cookie.SameSite, "strict"):
 			c.SetSameSite(http.SameSiteStrictMode)
-		case "none":
+		default:
 			c.SetSameSite(http.SameSiteNoneMode)
-		}
-		c.Header("Access-Control-Allow-Origin", a.config.Server.CORS.AccessControlAllowOrigin)
-		if a.config.Server.CORS.AccessControlAllowCredentials {
-			c.Header("Access-Control-Allow-Credentials", "true")
 		}
 	}
 }

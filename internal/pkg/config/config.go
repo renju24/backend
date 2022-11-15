@@ -5,12 +5,6 @@ type Config struct {
 	Version int `json:"version"`
 
 	Server struct {
-		CORS struct {
-			SameSite                      string `json:"same_site"`
-			AccessControlAllowOrigin      string `json:"access_control_allow_origin"`
-			AccessControlAllowCredentials bool   `json:"access_control_allow_credentials"`
-		} `json:"cors"`
-
 		Token struct {
 			SigningKey string `json:"signing_key"`
 			Cookie     struct {
@@ -20,6 +14,7 @@ type Config struct {
 				Domain   string `json:"domain"`
 				Secure   bool   `json:"secure"`
 				HttpOnly bool   `json:"http_only"`
+				SameSite string `json:"same_site"`
 			} `json:"cookie"`
 			Header struct {
 				Name string `json:"name"`
