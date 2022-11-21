@@ -75,15 +75,42 @@ func (g *Game) setColorAt(x, y int, c Color) error {
 }
 
 func (g *Game) ApplyMove(move Move) (winner Color, err error) {
-	e := g.checkMoveIsCorrect(move)
-	if e != nil {
-		return Nil, e
+	// If it's the first move, then user should be black and move should be in board's center.
+	if g.lastMove.color == Nil {
+		if move.color != Black {
+			return Nil, ErrFirstMoveShouldBeBlack
+		}
+		if move.x != 7 || move.y != 7 {
+			return Nil, ErrFirstMoveShouldBeInCenter
+		}
+	}
+
+	// Check the last move was made by another player.
+	if g.lastMove.color == move.color {
+		return Nil, ErrInvalidTurn
+	}
+
+	c, err := g.getColorAt(move.x, move.y)
+
+	// Check the coordinates are not outside the board.
+	if err != nil {
+		return Nil, ErrCoordinatesOutside
+	}
+	// Check the field is not already taken.
+	if c != Nil {
+		return Nil, ErrFieldAlreadyTaken
 	}
 
 	lastMoveLength := g.maxRowAfterMove(move)
 
 	if lastMoveLength > 5 && move.color == Black {
 		return Nil, ErrRow6IsBannedForBlack
+	}
+
+	err = g.checkForFork(move)
+
+	if err != nil {
+		return Nil, err
 	}
 
 	// Apply the move and change the board.
@@ -98,44 +125,48 @@ func (g *Game) ApplyMove(move Move) (winner Color, err error) {
 	return Nil, nil
 }
 
-func (g *Game) CheckMoveIsCorrect(move Move) error {
-	// If it's the first move, then user should be black and move should be in board's center.
-	if g.lastMove.color == Nil {
-		if move.color != Black {
-			return ErrFirstMoveShouldBeBlack
-		}
-		if move.x != 7 || move.y != 7 {
-			return ErrFirstMoveShouldBeInCenter
+func forkIsPermittedForColor(fork []int, c Color) bool {
+	if c == Black {
+		if len(fork) > 2 || (len(fork) == 2 && fork[0]*fork[1] != 12) { // if multiplicity > 2 or not 3x4 fork if multiplicity == 2
+			return false
 		}
 	}
-
-	c, err := g.getColorAt(move.x, move.y)
-
-	// Check the coordinates are not outside the board.
-	if err != nil {
-		return ErrCoordinatesOutside
-	}
-	// Check the field is not already taken.
-	if c != Nil {
-		return ErrFieldAlreadyTaken
-	}
-	// Check the last move was made by another player.
-	if g.lastMove.color == move.color {
-		return ErrInvalidTurn
-	}
-
-	if move.color == Black { // Check permitted forks for black
-		forks := countForksAfterMove(move)
-		if len(forks) > 2 || (len(forks) == 2 && forks[0]*forks[1] != 12) { // if multiplicity > 2 or not 3x4 fork if multiplicity == 2
-			return ErrInvalidForkForBlack
-		}
-	}
-
-	return nil
+	return true
 }
 
-func countForksAfterMove(m Move) []int {
-	return []int{} //TODO
+func indexIndiseBoard(i int) bool {
+	if i >= 0 && i <= MaxBoardIndex {
+		return true
+	}
+	return false
+}
+
+func (g *Game) checkForFork(m Move) error {
+	g.setColorAt(m.x, m.y, m.color)
+	// fork := []int{}
+
+	startIndex := m.x*BoardSize + m.y
+
+	for _, offset := range allDirectionOffsets {
+		// freeSpace := 0
+		rowLen := 1
+		// openBorders := 0
+
+		for i := -1; i <= 1; i += 2 { // i = -1, 1 to go on positive and negative directions
+			for curIndex := startIndex + offset*i; indexIndiseBoard(curIndex); curIndex += offset * i {
+				if g.board[curIndex] == m.color {
+					rowLen += 1
+				} else if g.board[curIndex] == Nil {
+
+				} else {
+					break // if next cell is opponent
+				}
+			}
+		}
+	}
+
+	g.setColorAt(m.x, m.y, Nil)
+	return nil
 }
 
 func (g *Game) maxRowAfterMove(move Move) int {

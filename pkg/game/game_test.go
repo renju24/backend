@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"testing"
@@ -15,35 +16,80 @@ import (
 
 var reg = regexp.MustCompile(`\w\d{1,2}`)
 
+func moveFromStr(str string) Move {
+	c := White
+	r := rune(str[0])
+	if unicode.IsUpper(r) {
+		c = Black
+		r = unicode.ToLower(r)
+	}
+	y := int(r - 'a')
+	x, _ := strconv.Atoi(str[1:])
+	x = 15 - x
+
+	return Move{
+		x:     x,
+		y:     y,
+		color: c,
+	}
+}
+
 // initializes with specified sequence
 func initGame(iniStr string) *Game {
 	g := NewGame()
 	for _, v := range reg.FindAllString(iniStr, -1) {
-		c := White
-		r := rune(v[0])
-		if unicode.IsUpper(r) {
-			c = Black
-			r = unicode.ToLower(r)
-		}
-		x := int(r - 'a')
-		y, _ := strconv.Atoi(v[1:])
-		g.board[x*BoardSize+y] = c
-		g.lastMove = Move{
-			x:     x,
-			y:     y,
-			color: c,
-		}
+		g.lastMove = moveFromStr(v)
+		g.board[g.lastMove.x*BoardSize+g.lastMove.y] = g.lastMove.color
 	}
 	return g
 }
 
-func TestGame2(t *testing.T) {
-	g := initGame("A0B1A2A3")
+func printField(g *Game) {
+	for i := 0; i < 15; i++ {
+		for j := 0; j < 15; j++ {
+			var c rune
+			switch g.board[i*BoardSize+j] {
+			case Black:
+				c = '*'
+			case White:
+				c = 'o'
+			case Nil:
+				c = '-'
+			}
+			fmt.Printf("%c", c)
+		}
+		fmt.Print("\n")
+	}
 
-	for _, v := range g.board {
-		t.Logf("%d", int(v))
+	fmt.Print("\n")
+}
+
+func TestForks(t *testing.T) {
+	testCases := []struct {
+		iniStr        string
+		move          Move
+		expectedError error
+	}{
+		{
+			iniStr:        "G9I9j9H8H7k4j3i2",
+			move:          moveFromStr("H9"),
+			expectedError: nil,
+		},
+		{
+			iniStr:        "c12d11c10d9i14I12I11H8F6I6",
+			move:          moveFromStr("I9"),
+			expectedError: ErrInvalidForkForBlack,
+		},
+	}
+
+	for _, testCase := range testCases {
+		g := initGame(testCase.iniStr)
+		printField(g)
+		actualErr := g.checkForFork(testCase.move)
+		require.ErrorIs(t, testCase.expectedError, actualErr)
 	}
 }
+
 func TestGame(t *testing.T) {
 	testCases := []struct {
 		moves          []Move
@@ -79,7 +125,7 @@ func TestGame(t *testing.T) {
 		{
 			moves: []Move{
 				NewMove(7, 7, Black),
-				NewMove(5, 15, Black),
+				NewMove(5, 15, White),
 			},
 			expectedWinner: Nil,
 			expectedError:  ErrCoordinatesOutside,
