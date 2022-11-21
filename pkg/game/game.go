@@ -143,21 +143,23 @@ func indexIndiseBoard(i int) bool {
 
 func (g *Game) checkForFork(m Move) error {
 	g.setColorAt(m.x, m.y, m.color)
-	// fork := []int{}
+	fork := []int{}
 
 	startIndex := m.x*BoardSize + m.y
 
 	for _, offset := range allDirectionOffsets {
 		// freeSpace := 0
 		rowLen := 1
+		centerLen := 1
 		// openBorders := 0
 
 		for i := -1; i <= 1; i += 2 { // i = -1, 1 to go on positive and negative directions
+			gap := false
 			for curIndex := startIndex + offset*i; indexIndiseBoard(curIndex); curIndex += offset * i {
 				if g.board[curIndex] == m.color {
-					rowLen += 1
+					centerLen += 1
 				} else if g.board[curIndex] == Nil {
-
+					gap = true
 				} else {
 					break // if next cell is opponent
 				}
