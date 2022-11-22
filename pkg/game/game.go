@@ -2,6 +2,7 @@ package game
 
 import (
 	"errors"
+	"fmt"
 )
 
 const BoardSize = 15
@@ -141,34 +142,114 @@ func indexIndiseBoard(i int) bool {
 	return false
 }
 
+const (
+	rowState = iota
+	spaceState
+)
+
 func (g *Game) checkForFork(m Move) error {
 	g.setColorAt(m.x, m.y, m.color)
 	fork := []int{}
-
 	startIndex := m.x*BoardSize + m.y
 
 	for _, offset := range allDirectionOffsets {
-		// freeSpace := 0
-		rowLen := 1
 		centerLen := 1
-		// openBorders := 0
+		sideLengths := []int{}
+		borderGapLengths := []int{}
 
 		for i := -1; i <= 1; i += 2 { // i = -1, 1 to go on positive and negative directions
-			gap := false
-			for curIndex := startIndex + offset*i; indexIndiseBoard(curIndex); curIndex += offset * i {
-				if g.board[curIndex] == m.color {
-					centerLen += 1
-				} else if g.board[curIndex] == Nil {
-					gap = true
+			prevLen := 0
+			state := rowState
+			finished := false
+			rowNum := 0
+			curIndex := startIndex
+
+			for {
+
+				if (offset*i == 1 && (curIndex+1)%BoardSize == 0) ||
+					(offset*i == -1 && curIndex%BoardSize == 0) ||
+					!indexIndiseBoard(curIndex+offset*i) {
+
+					switch state {
+					case rowState:
+						if rowNum == 0 {
+							centerLen += prevLen
+						} else {
+							sideLengths = append(sideLengths, prevLen)
+						}
+					case spaceState:
+						borderGapLengths = append(borderGapLengths, prevLen)
+					}
+					break
 				} else {
-					break // if next cell is opponent
+					curIndex += offset * i
+				}
+
+				switch state {
+				case rowState:
+					if g.board[curIndex] == m.color {
+						prevLen += 1
+					} else {
+						if rowNum == 0 {
+							centerLen += prevLen
+						} else {
+							sideLengths = append(sideLengths, prevLen)
+						}
+						if g.board[curIndex] == Nil {
+							prevLen = 1
+							state = spaceState
+						} else {
+							finished = true
+						}
+					}
+				case spaceState:
+					if g.board[curIndex] == Nil {
+						prevLen += 1
+					} else {
+						if g.board[curIndex] == m.color && prevLen == 1 && rowNum == 0 {
+							//todo check move is permitted
+							rowNum += 1
+							state = rowState
+							break
+						}
+						borderGapLengths = append(borderGapLengths, prevLen)
+						finished = true
+					}
+				}
+
+				if finished {
+					break
 				}
 			}
 		}
+		if len(sideLengths) == 0 || len(sideLengths) == 1 {
+			sumLen := centerLen
+			if len(sideLengths) == 1 {
+				sumLen += sideLengths[0]
+			}
+
+			if sumLen == 3 {
+				if len(borderGapLengths) == 2 && borderGapLengths[0]+borderGapLengths[1] >= 3 {
+					fork = append(fork, 3)
+				}
+			} else if sumLen == 4 {
+				if len(borderGapLengths) >= 1 {
+					fork = append(fork, 4)
+				}
+			}
+		} else {
+			// todo
+		}
+		fmt.Println()
 	}
 
 	g.setColorAt(m.x, m.y, Nil)
-	return nil
+
+	if !forkIsPermittedForColor(fork, m.color) {
+		return ErrInvalidForkForBlack
+	} else {
+		return nil
+	}
 }
 
 func (g *Game) maxRowAfterMove(move Move) int {
