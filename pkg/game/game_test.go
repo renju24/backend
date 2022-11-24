@@ -90,6 +90,36 @@ func TestForks(t *testing.T) {
 			move:          moveFromStr("J10"),
 			expectedError: ErrInvalidForkForBlack,
 		},
+		{
+			iniStr:        "D8F8H8K8G6G5d2e1f2g1h2i1",
+			move:          moveFromStr("G8"),
+			expectedError: nil,
+		},
+		{
+			iniStr:        "E8G8H8J8J9L8G6F5e2f2g2i2j2h1i1j1",
+			move:          moveFromStr("I8"),
+			expectedError: nil,
+		},
+		// { // todo
+		// 	iniStr:        "I9E8H8J8M8I6d2f2g2h1i1j1",
+		// 	move:          moveFromStr("I8"),
+		// 	expectedError: nil,
+		// },
+		{
+			iniStr:        "C7E7H7",
+			move:          moveFromStr("F7"),
+			expectedError: nil,
+		},
+		{
+			iniStr:        "B7C7E7H7",
+			move:          moveFromStr("F7"),
+			expectedError: nil,
+		},
+		{
+			iniStr:        "B7C7E7H7I7",
+			move:          moveFromStr("F7"),
+			expectedError: nil,
+		},
 	}
 
 	for _, testCase := range testCases {

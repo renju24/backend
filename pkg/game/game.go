@@ -147,6 +147,8 @@ const (
 	spaceState
 )
 
+var leftRightDir = [2]int{-1, 1}
+
 func (g *Game) checkForFork(m Move) error {
 	g.setColorAt(m.x, m.y, m.color)
 	fork := []int{}
@@ -156,6 +158,8 @@ func (g *Game) checkForFork(m Move) error {
 		centerLen := 1
 		sideLengths := []int{}
 		borderGapLengths := []int{}
+		edgesIndices := []int{}
+		gapIndices := []int{}
 
 		for i := -1; i <= 1; i += 2 { // i = -1, 1 to go on positive and negative directions
 			prevLen := 0
@@ -208,6 +212,7 @@ func (g *Game) checkForFork(m Move) error {
 					} else {
 						if g.board[curIndex] == m.color && prevLen == 1 && rowNum == 0 {
 							//todo check move is permitted
+							gapIndices = append(gapIndices, curIndex-offset*i)
 							rowNum += 1
 							state = rowState
 							break
@@ -222,6 +227,11 @@ func (g *Game) checkForFork(m Move) error {
 				}
 			}
 		}
+
+		if m.color == Black && centerLen > 5 {
+			return ErrRow6IsBannedForBlack
+		}
+
 		if len(sideLengths) == 0 || len(sideLengths) == 1 {
 			sumLen := centerLen
 			if len(sideLengths) == 1 {
@@ -237,7 +247,10 @@ func (g *Game) checkForFork(m Move) error {
 					fork = append(fork, 4)
 				}
 			}
-		} else {
+		} else { // len(sideLengths) == 3
+			if centerLen+sideLengths[0] == 4 && centerLen+sideLengths[1] == 4 {
+				fork = append(fork, 4)
+			}
 			// todo
 		}
 		fmt.Println()
