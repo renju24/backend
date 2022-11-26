@@ -44,6 +44,15 @@ func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*
 	if inviter.Username == req.Username {
 		return nil, apierror.ErrorCallingYourselfForGame
 	}
+	ok, err := apiServer.db.IsPlaying(inviterID)
+	if err != nil {
+		apiServer.logger.Error().Err(err).Send()
+		return nil, apierror.ErrorInternal
+	}
+	// If user is already playing a game.
+	if ok {
+		return nil, apierror.ErrorAlreadyPlaying
+	}
 	opponent, err := apiServer.db.GetUserByLogin(req.Username)
 	if err != nil {
 		if errors.Is(err, apierror.ErrorUserNotFound) {
