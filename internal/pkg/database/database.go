@@ -157,6 +157,9 @@ func (db *Database) IsGameMember(userID, gameID int64) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
 	defer cancel()
 	if err := db.pool.QueryRow(ctx, query, gameID, userID, userID).Scan(&ok); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
 		return false, err
 	}
 	return ok, nil
@@ -235,4 +238,18 @@ func (db *Database) Top10() ([]*model.User, error) {
 		users = append(users, &user)
 	}
 	return users, err
+}
+
+func (db *Database) IsPlaying(userID int64) (bool, error) {
+	var ok bool
+	query := `SELECT TRUE FROM games WHERE (black_user_id = $1 OR white_user_id = $1) AND status = $2`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	if err := db.pool.QueryRow(ctx, query, userID, model.InProgress).Scan(&ok); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return ok, nil
 }
