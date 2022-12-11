@@ -11,6 +11,7 @@ import (
 
 	"github.com/armantarkhanian/websocket"
 	"github.com/renju24/backend/internal/pkg/apierror"
+	"github.com/renju24/backend/model"
 )
 
 type RPCCallForGameRequest struct {
@@ -76,6 +77,29 @@ func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*
 		apiServer.logger.Error().Err(err).Send()
 		return nil, apierror.ErrorInternal
 	}
+	gameChannel := fmt.Sprintf("game_%d", gameID)
+	// Subscribe intviter to game channel.
+	if err = c.Subscribe(gameChannel); err != nil {
+		apiServer.logger.Error().Err(err).Send()
+		return nil, apierror.ErrorInternal
+	}
+	// Waiting opponent for 60 second and close the game.
+	go func(opponentID, gameID int64) {
+		time.Sleep(60 * time.Second)
+		game, err := apiServer.db.GetGameByID(gameID)
+		if err == nil {
+			apiServer.logger.Warn().Err(err).Send()
+		}
+		// If still waiting opponent, then close the game.
+		if game.Status == model.WaitingOpponent {
+			if err = apiServer.db.DeclineGameInvitation(opponentID, gameID); err != nil {
+				apiServer.logger.Warn().Err(err).Send()
+			}
+		}
+		if _, err = apiServer.PublishEvent(gameChannel, &EventDeclineGameInvitation{}); err != nil {
+			apiServer.logger.Warn().Err(err).Send()
+		}
+	}(opponent.ID, gameID)
 	// TODO: send push notifications.
 	return &RPCCallForGameResponse{
 		GameID: gameID,
