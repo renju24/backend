@@ -37,3 +37,9 @@ type EventGameInvitation struct {
 func (e *EventGameInvitation) EventType() string {
 	return "game_invitation"
 }
+
+type EventDeclineGameInvitation struct{}
+
+func (e *EventDeclineGameInvitation) EventType() string {
+	return "decline_game_invitation"
+}

@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/armantarkhanian/websocket"
@@ -31,8 +32,11 @@ func (apiServer *APIServer) DeclineGameInvitation(c *websocket.Client, jsonData 
 	if !isGameMember {
 		return nil, apierror.ErrorPermissionDenied
 	}
-	err = apiServer.db.DeclineGameInvitation(opponentID, req.GameID)
-	if err != nil {
+	if err = apiServer.db.DeclineGameInvitation(opponentID, req.GameID); err != nil {
+		apiServer.logger.Error().Err(err).Send()
+		return nil, apierror.ErrorInternal
+	}
+	if _, err = apiServer.PublishEvent(fmt.Sprintf("game_%d", req.GameID), &EventDeclineGameInvitation{}); err != nil {
 		apiServer.logger.Error().Err(err).Send()
 		return nil, apierror.ErrorInternal
 	}
