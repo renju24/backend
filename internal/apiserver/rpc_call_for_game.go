@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -17,7 +18,7 @@ type RPCCallForGameRequest struct {
 }
 
 type RPCCallForGameResponse struct {
-	Status string `json:"status"`
+	GameID int64 `json:"game_id"`
 }
 
 func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*RPCCallForGameResponse, error) {
@@ -61,6 +62,12 @@ func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*
 		apiServer.logger.Error().Err(err).Send()
 		return nil, apierror.ErrorInternal
 	}
+	// Creating game in database with random black and white user and retrieve the game id.
+	gameID, err := apiServer.db.CreateGame(randomBlackAndWhite(inviterID, opponent.ID))
+	if err != nil {
+		apiServer.logger.Error().Err(err).Send()
+		return nil, apierror.ErrorInternal
+	}
 	_, err = apiServer.PublishEvent(fmt.Sprintf("user_%d", opponent.ID), &EventGameInvitation{
 		Inviter:   inviter.Username,
 		InvitedAt: time.Now(),
@@ -70,5 +77,19 @@ func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*
 		return nil, apierror.ErrorInternal
 	}
 	// TODO: send push notifications.
-	return &RPCCallForGameResponse{"ok"}, nil
+	return &RPCCallForGameResponse{
+		GameID: gameID,
+	}, nil
+}
+
+var randUser = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+func randomBlackAndWhite(user1, user2 int64) (blackUserID, whiteUserID int64) {
+	switch randUser.Intn(2) {
+	case 0:
+		return user1, user2
+	case 1:
+		return user2, user1
+	}
+	return user1, user2
 }

@@ -19,7 +19,7 @@ type Database interface {
 	GetUserByID(userID int64) (*model.User, error)
 
 	// Create new game.
-	CreateGame(blackUserID, whiteUserID int64) (*model.Game, error)
+	CreateGame(blackUserID, whiteUserID int64) (gameID int64, err error)
 
 	// Is user a game member?
 	IsGameMember(userID, gameID int64) (bool, error)
@@ -35,6 +35,9 @@ type Database interface {
 
 	// Top10 return the top 10 users by ranking.
 	Top10() ([]*model.User, error)
+
+	// Delete a game from database.
+	DeclineGameInvitation(userID int64, gameID int64) error
 
 	// Close
 	Close() error

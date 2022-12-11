@@ -135,20 +135,14 @@ func (db *Database) GetUserByID(userID int64) (*model.User, error) {
 	return &user, err
 }
 
-func (db *Database) CreateGame(blackUserID, whiteUserID int64) (*model.Game, error) {
-	now := time.Now()
-	game := model.Game{
-		BlackUserID: blackUserID,
-		WhiteUserID: whiteUserID,
-		StartedAt:   now,
-	}
-	query := `INSERT INTO games (black_user_id, white_user_id, started_at) VALUES ($1, $2, $3) RETURNING id;`
+func (db *Database) CreateGame(blackUserID, whiteUserID int64) (gameID int64, err error) {
+	query := `INSERT INTO games (black_user_id, white_user_id, status, started_at) VALUES ($1, $2, $3, NOW()) RETURNING id;`
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
 	defer cancel()
-	if err := db.pool.QueryRow(ctx, query, blackUserID, whiteUserID, now).Scan(&game.ID); err != nil {
-		return nil, err
+	if err := db.pool.QueryRow(ctx, query, blackUserID, whiteUserID, model.WaitingOpponent).Scan(&gameID); err != nil {
+		return 0, err
 	}
-	return &game, nil
+	return gameID, nil
 }
 
 func (db *Database) IsGameMember(userID, gameID int64) (bool, error) {
@@ -252,4 +246,12 @@ func (db *Database) IsPlaying(userID int64) (bool, error) {
 		return false, err
 	}
 	return ok, nil
+}
+
+func (db *Database) DeclineGameInvitation(userID int64, gameID int64) error {
+	query := `DELETE FROM games WHERE (black_user_id = $1 OR white_user_id = $1) AND id = $2`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	_, err := db.pool.Exec(ctx, query, userID, userID, gameID)
+	return err
 }
