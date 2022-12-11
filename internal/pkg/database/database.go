@@ -252,6 +252,6 @@ func (db *Database) DeclineGameInvitation(userID int64, gameID int64) error {
 	query := `DELETE FROM games WHERE (black_user_id = $1 OR white_user_id = $1) AND id = $2`
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
 	defer cancel()
-	_, err := db.pool.Exec(ctx, query, userID, userID, gameID)
+	_, err := db.pool.Exec(ctx, query, userID, gameID)
 	return err
 }
