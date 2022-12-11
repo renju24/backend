@@ -21,6 +21,9 @@ type Database interface {
 	// Create new game.
 	CreateGame(blackUserID, whiteUserID int64) (gameID int64, err error)
 
+	// Get game by id.
+	GetGameByID(gameID int64) (*model.Game, error)
+
 	// Is user a game member?
 	IsGameMember(userID, gameID int64) (bool, error)
 
@@ -38,6 +41,9 @@ type Database interface {
 
 	// Delete a game from database.
 	DeclineGameInvitation(userID int64, gameID int64) error
+
+	// Set game status to InProgress.
+	StartGame(gameID int64) error
 
 	// Close
 	Close() error

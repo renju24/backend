@@ -136,7 +136,7 @@ func (db *Database) GetUserByID(userID int64) (*model.User, error) {
 }
 
 func (db *Database) CreateGame(blackUserID, whiteUserID int64) (gameID int64, err error) {
-	query := `INSERT INTO games (black_user_id, white_user_id, status, started_at) VALUES ($1, $2, $3, NOW()) RETURNING id;`
+	query := `INSERT INTO games (black_user_id, white_user_id, status) VALUES ($1, $2, $3) RETURNING id;`
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
 	defer cancel()
 	if err := db.pool.QueryRow(ctx, query, blackUserID, whiteUserID, model.WaitingOpponent).Scan(&gameID); err != nil {
@@ -254,4 +254,43 @@ func (db *Database) DeclineGameInvitation(userID int64, gameID int64) error {
 	defer cancel()
 	_, err := db.pool.Exec(ctx, query, userID, gameID)
 	return err
+}
+
+func (db *Database) StartGame(gameID int64) error {
+	query := `UPDATE games SET status = $1, started_at = NOW() WHERE id = $2`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	_, err := db.pool.Exec(ctx, query, model.InProgress, gameID)
+	return err
+}
+
+func (db *Database) GetGameByID(gameID int64) (*model.Game, error) {
+	query := `
+		SELECT
+			id,
+			black_game_id,
+			white_game_id,
+			winner_id,
+			status,
+			started_at,
+			finished_at
+		FROM
+			games
+		WHERE id = $1`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	var game model.Game
+	err := db.pool.QueryRow(ctx, query, gameID).Scan(
+		&game.ID,
+		&game.BlackUserID,
+		&game.WhiteUserID,
+		&game.Winner,
+		&game.Status,
+		&game.StartedAt,
+		&game.FinishedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, apierror.ErrorGameNotFound
+	}
+	return &game, err
 }

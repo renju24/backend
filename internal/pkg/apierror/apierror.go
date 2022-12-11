@@ -71,5 +71,7 @@ var (
 	ErrorUserNotFound               = &centrifuge.Error{416, "user not found", false}
 	ErrorCallingYourselfForGame     = &centrifuge.Error{417, "can't call yourself for a game", false}
 	ErrorInvalidUsernameCharacter   = &centrifuge.Error{418, "invalid username character", false}
-	ErrorAlreadyPlaying             = &centrifuge.Error{419, "user is already playing a game", false}
+	ErrorInviterAlreadyPlaying      = &centrifuge.Error{419, "inviter already playing a game", false}
+	ErrorOpponentAlreadyPlaying     = &centrifuge.Error{420, "opponent already playing a game", false}
+	ErrorGameNotFound               = &centrifuge.Error{421, "game not found", false}
 )
