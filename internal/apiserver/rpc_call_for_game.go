@@ -46,14 +46,14 @@ func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*
 	if inviter.Username == req.Username {
 		return nil, apierror.ErrorCallingYourselfForGame
 	}
+	// If inviter is already playing a game.
 	ok, err := apiServer.db.IsPlaying(inviterID)
 	if err != nil {
 		apiServer.logger.Error().Err(err).Send()
 		return nil, apierror.ErrorInternal
 	}
-	// If user is already playing a game.
 	if ok {
-		return nil, apierror.ErrorAlreadyPlaying
+		return nil, apierror.ErrorInviterAlreadyPlaying
 	}
 	opponent, err := apiServer.db.GetUserByLogin(req.Username)
 	if err != nil {
@@ -63,16 +63,17 @@ func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*
 		apiServer.logger.Error().Err(err).Send()
 		return nil, apierror.ErrorInternal
 	}
-	// Creating game in database with random black and white user and retrieve the game id.
-	gameID, err := apiServer.db.CreateGame(randomBlackAndWhite(inviterID, opponent.ID))
+	// If opponent is already playing a game.
+	ok, err = apiServer.db.IsPlaying(opponent.ID)
 	if err != nil {
 		apiServer.logger.Error().Err(err).Send()
 		return nil, apierror.ErrorInternal
 	}
-	_, err = apiServer.PublishEvent(fmt.Sprintf("user_%d", opponent.ID), &EventGameInvitation{
-		Inviter:   inviter.Username,
-		InvitedAt: time.Now(),
-	})
+	if ok {
+		return nil, apierror.ErrorOpponentAlreadyPlaying
+	}
+	// Creating game in database with random black and white user and retrieve the game id.
+	gameID, err := apiServer.db.CreateGame(randomBlackAndWhite(inviterID, opponent.ID))
 	if err != nil {
 		apiServer.logger.Error().Err(err).Send()
 		return nil, apierror.ErrorInternal
@@ -83,12 +84,22 @@ func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*
 		apiServer.logger.Error().Err(err).Send()
 		return nil, apierror.ErrorInternal
 	}
+	opponentChannel := fmt.Sprintf("user_%d", opponent.ID)
+	_, err = apiServer.PublishEvent(opponentChannel, &EventGameInvitation{
+		Inviter:   inviter.Username,
+		InvitedAt: time.Now(),
+	})
+	if err != nil {
+		apiServer.logger.Error().Err(err).Send()
+		return nil, apierror.ErrorInternal
+	}
 	// Waiting opponent for 60 second and close the game.
 	go func(opponentID, gameID int64) {
 		time.Sleep(60 * time.Second)
 		game, err := apiServer.db.GetGameByID(gameID)
-		if err == nil {
+		if err != nil {
 			apiServer.logger.Warn().Err(err).Send()
+			return
 		}
 		// If still waiting opponent, then close the game.
 		if game.Status == model.WaitingOpponent {

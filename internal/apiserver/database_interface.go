@@ -42,7 +42,7 @@ type Database interface {
 	// Delete a game from database.
 	DeclineGameInvitation(userID int64, gameID int64) error
 
-	// Set gmae status to InProgress.
+	// Set game status to InProgress.
 	StartGame(gameID int64) error
 
 	// Close
