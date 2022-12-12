@@ -24,6 +24,12 @@ type Database interface {
 	// Get game by id.
 	GetGameByID(gameID int64) (*model.Game, error)
 
+	// Get game moves by id.
+	GetGameMovesByID(gameID int64) ([]model.Move, error)
+
+	// Create new move.
+	CreateMove(gameID, userID int64, x, y int) error
+
 	// Is user a game member?
 	IsGameMember(userID, gameID int64) (bool, error)
 
@@ -44,6 +50,9 @@ type Database interface {
 
 	// Set game status to InProgress.
 	StartGame(gameID int64) error
+
+	// Set game status to Finished.
+	FinishGameWithWinner(gameID, winnerID int64) error
 
 	// Close
 	Close() error

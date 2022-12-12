@@ -27,7 +27,8 @@ func (apiServer *APIServer) AcceptGameInvitation(c *websocket.Client, jsonData [
 	// Check if user is a game member.
 	isGameMember, err := apiServer.db.IsGameMember(opponentID, req.GameID)
 	if err != nil {
-		return nil, err
+		apiServer.logger.Error().Err(err).Send()
+		return nil, apierror.ErrorInternal
 	}
 	if !isGameMember {
 		return nil, apierror.ErrorPermissionDenied
