@@ -65,6 +65,8 @@ func (apiServer *APIServer) OnRPC(c *websocket.Client, rpc centrifuge.RPCEvent) 
 		response, err = apiServer.DeclineGameInvitation(c, rpc.Data)
 	case "accept_game_invitation":
 		response, err = apiServer.AcceptGameInvitation(c, rpc.Data)
+	case "make_move":
+		response, err = apiServer.MakeMove(c, rpc.Data)
 	default:
 		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
 	}

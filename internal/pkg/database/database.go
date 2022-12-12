@@ -294,3 +294,38 @@ func (db *Database) GetGameByID(gameID int64) (*model.Game, error) {
 	}
 	return &game, err
 }
+
+func (db *Database) GetGameMovesByID(gameID int64) ([]model.Move, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	rows, err := db.pool.Query(ctx, `SELECT game_id, user_id, x_coordinate, y_coordinate FROM moves WHERE game_id = $1`, gameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var moves []model.Move
+	for rows.Next() {
+		var move model.Move
+		if err = rows.Scan(&move.GameID, &move.UserID, &move.YCoordinate, &move.YCoordinate); err != nil {
+			return nil, err
+		}
+		moves = append(moves, move)
+	}
+	return moves, err
+}
+
+func (db *Database) CreateMove(gameID, userID int64, x, y int) error {
+	query := `INSERT INTO moves (game_id, user_id, x_coordinate, y_coordinate) VALUES ($1, $2, $3, $4);`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	_, err := db.pool.Exec(ctx, query, gameID, userID, x, y)
+	return err
+}
+
+func (db *Database) FinishGameWithWinner(gameID, winnerID int64) error {
+	query := `UPDATE games SET status = $1, winner_id = $2, finished_at = NOW() WHERE id = $3`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	_, err := db.pool.Exec(ctx, query, model.Finished, winnerID, gameID)
+	return err
+}
