@@ -149,19 +149,22 @@ const (
 
 var leftRightDir = [2]int{-1, 1}
 
+func coordinatesByInex(indx int) (x, y int) {
+	x = indx / BoardSize
+	y = indx - x*BoardSize
+	return x, y
+}
+
 func (g *Game) checkForFork(m Move) error {
-	g.setColorAt(m.x, m.y, m.color)
 	fork := []int{}
 	startIndex := m.x*BoardSize + m.y
 
 	for _, offset := range allDirectionOffsets {
 		centerLen := 1
-		sideLengths := []int{}
-		borderGapLengths := []int{}
-		edgesIndices := []int{}
-		gapIndices := []int{}
+		sideLengths := [2]int{0, 0}
+		borderGapLengths := [2]int{0, 0}
 
-		for i := -1; i <= 1; i += 2 { // i = -1, 1 to go on positive and negative directions
+		for i := range leftRightDir { // i = -1, 1 to go on positive and negative directions
 			prevLen := 0
 			state := rowState
 			finished := false
@@ -170,23 +173,23 @@ func (g *Game) checkForFork(m Move) error {
 
 			for {
 
-				if (offset*i == 1 && (curIndex+1)%BoardSize == 0) ||
-					(offset*i == -1 && curIndex%BoardSize == 0) ||
-					!indexIndiseBoard(curIndex+offset*i) {
+				if (offset*leftRightDir[i] == 1 && (curIndex+1)%BoardSize == 0) ||
+					(offset*leftRightDir[i] == -1 && curIndex%BoardSize == 0) ||
+					!indexIndiseBoard(curIndex+offset*leftRightDir[i]) {
 
 					switch state {
 					case rowState:
 						if rowNum == 0 {
 							centerLen += prevLen
 						} else {
-							sideLengths = append(sideLengths, prevLen)
+							sideLengths[i] = prevLen
 						}
 					case spaceState:
-						borderGapLengths = append(borderGapLengths, prevLen)
+						borderGapLengths[i] = prevLen
 					}
 					break
 				} else {
-					curIndex += offset * i
+					curIndex += offset * leftRightDir[i]
 				}
 
 				switch state {
@@ -197,28 +200,44 @@ func (g *Game) checkForFork(m Move) error {
 						if rowNum == 0 {
 							centerLen += prevLen
 						} else {
-							sideLengths = append(sideLengths, prevLen)
+							sideLengths[i] = prevLen
 						}
 						if g.board[curIndex] == Nil {
 							prevLen = 1
-							state = spaceState
+							x, y := coordinatesByInex(curIndex)
+							// g.setColorAt(m.x, m.y, m.color)
+							if g.checkForFork(NewMove(x, y, m.color)) != nil {
+								finished = true
+								// borderGapLengths[i] = 0
+							} else {
+								prevLen = 1
+								state = spaceState
+							}
+							// g.setColorAt(m.x, m.y, Nil)
 						} else {
+							// borderGapLengths[i] = 0
 							finished = true
 						}
 					}
 				case spaceState:
 					if g.board[curIndex] == Nil {
-						prevLen += 1
+						x, y := coordinatesByInex(curIndex)
+						// g.setColorAt(m.x, m.y, m.color)
+						if g.checkForFork(NewMove(x, y, m.color)) != nil {
+							finished = true
+							borderGapLengths[i] = prevLen
+						} else {
+							prevLen += 1
+						}
+						// g.setColorAt(m.x, m.y, Nil)
 					} else {
 						if g.board[curIndex] == m.color && prevLen == 1 && rowNum == 0 {
-							//todo check move is permitted
-							gapIndices = append(gapIndices, curIndex-offset*i)
 							rowNum += 1
 							state = rowState
-							break
+						} else {
+							borderGapLengths[i] = prevLen
+							finished = true
 						}
-						borderGapLengths = append(borderGapLengths, prevLen)
-						finished = true
 					}
 				}
 
@@ -232,31 +251,36 @@ func (g *Game) checkForFork(m Move) error {
 			return ErrRow6IsBannedForBlack
 		}
 
-		if len(sideLengths) == 0 || len(sideLengths) == 1 {
-			sumLen := centerLen
-			if len(sideLengths) == 1 {
-				sumLen += sideLengths[0]
-			}
-
-			if sumLen == 3 {
-				if len(borderGapLengths) == 2 && borderGapLengths[0]+borderGapLengths[1] >= 3 {
-					fork = append(fork, 3)
-				}
-			} else if sumLen == 4 {
-				if len(borderGapLengths) >= 1 {
-					fork = append(fork, 4)
-				}
-			}
-		} else { // len(sideLengths) == 3
+		if sideLengths[0]*sideLengths[1] != 0 {
 			if centerLen+sideLengths[0] == 4 && centerLen+sideLengths[1] == 4 {
 				fork = append(fork, 4)
 			}
-			// todo
+			break
 		}
+
+		// if len(sideLengths) == 0 || len(sideLengths) == 1 {
+		// 	sumLen := centerLen
+		// 	if len(sideLengths) == 1 {
+		// 		sumLen += sideLengths[0]
+		// 	}
+
+		// 	if sumLen == 3 {
+		// 		if len(borderGapLengths) == 2 && borderGapLengths[0]+borderGapLengths[1] >= 3 {
+		// 			fork = append(fork, 3)
+		// 		}
+		// 	} else if sumLen == 4 {
+		// 		if len(borderGapLengths) >= 1 {
+		// 			fork = append(fork, 4)
+		// 		}
+		// 	}
+		// } else { // len(sideLengths) == 3
+		// 	if centerLen+sideLengths[0] == 4 && centerLen+sideLengths[1] == 4 {
+		// 		fork = append(fork, 4)
+		// 	}
+		// 	// todo
+		// }
 		fmt.Println()
 	}
-
-	g.setColorAt(m.x, m.y, Nil)
 
 	if !forkIsPermittedForColor(fork, m.color) {
 		return ErrInvalidForkForBlack
