@@ -89,9 +89,13 @@ func initApi(runMode string, db Database, router *gin.Engine, logger *zerolog.Lo
 		a.addr = ":443"
 	}
 
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowWebSockets = true
+
 	a.router.Use(
 		sameSiteMiddleware(a),
-		cors.Default(),
+		cors.New(corsConfig),
 		loggerMiddleware(a),
 	)
 
@@ -192,6 +196,12 @@ func initApi(runMode string, db Database, router *gin.Engine, logger *zerolog.Lo
 			Header:       config.Server.Token.Header.Name,
 			Cookie:       config.Server.Token.Cookie.Name,
 			HeaderPrefix: "Bearer",
+		},
+		WebsocketConfig: centrifuge.WebsocketConfig{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+			UseWriteBufferPool: true,
 		},
 	})
 	if err != nil {
