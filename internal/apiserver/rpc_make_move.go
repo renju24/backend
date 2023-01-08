@@ -54,6 +54,8 @@ func (apiServer *APIServer) MakeMove(c *websocket.Client, jsonData []byte) (*RPC
 		apiServer.logger.Error().Err(err).Send()
 		return nil, apierror.ErrorInternal
 	}
+	// Clear board before applying all moves.
+	game.ClearBoard()
 	for _, move := range moves {
 		if _, err = game.ApplyMove(move.UserID, move.XCoordinate, move.YCoordinate); err != nil {
 			return nil, err

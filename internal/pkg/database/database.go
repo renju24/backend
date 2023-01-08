@@ -296,7 +296,7 @@ func (db *Database) GetGameByID(gameID int64) (*model.Game, error) {
 		SELECT
 			id,
 			black_user_id,
-			black_user_id,
+			white_user_id,
 			winner_id,
 			status,
 			started_at,
@@ -333,7 +333,7 @@ func (db *Database) GetGameMovesByID(gameID int64) ([]model.Move, error) {
 	var moves []model.Move
 	for rows.Next() {
 		var move model.Move
-		if err = rows.Scan(&move.GameID, &move.UserID, &move.YCoordinate, &move.YCoordinate); err != nil {
+		if err = rows.Scan(&move.GameID, &move.UserID, &move.XCoordinate, &move.YCoordinate); err != nil {
 			return nil, err
 		}
 		moves = append(moves, move)
