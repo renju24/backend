@@ -44,6 +44,9 @@ type Game struct {
 // ApplyMove ...
 func (g *Game) ApplyMove(userID int64, x, y int) (winner pkggame.Color, err error) {
 	g.mu.Lock()
+	if g.game == nil {
+		g.game = pkggame.NewGame()
+	}
 	winner, err = g.game.ApplyMove(pkggame.NewMove(x, y, g.GetColorByUserID(userID)))
 	g.mu.Unlock()
 	return
