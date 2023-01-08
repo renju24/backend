@@ -78,14 +78,9 @@ func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*
 		apiServer.logger.Error().Err(err).Send()
 		return nil, apierror.ErrorInternal
 	}
-	gameChannel := fmt.Sprintf("game_%d", gameID)
-	// Subscribe intviter to game channel.
-	if err = c.Subscribe(gameChannel); err != nil {
-		apiServer.logger.Error().Err(err).Send()
-		return nil, apierror.ErrorInternal
-	}
 	opponentChannel := fmt.Sprintf("user_%d", opponent.ID)
 	_, err = apiServer.PublishEvent(opponentChannel, &EventGameInvitation{
+		GameID:    gameID,
 		Inviter:   inviter.Username,
 		InvitedAt: time.Now(),
 	})
@@ -107,6 +102,7 @@ func (apiServer *APIServer) CallForGame(c *websocket.Client, jsonData []byte) (*
 				apiServer.logger.Warn().Err(err).Send()
 			}
 		}
+		gameChannel := fmt.Sprintf("game_%d", gameID)
 		if _, err = apiServer.PublishEvent(gameChannel, &EventDeclineGameInvitation{}); err != nil {
 			apiServer.logger.Warn().Err(err).Send()
 		}

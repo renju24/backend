@@ -3,7 +3,6 @@ package apiserver
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/armantarkhanian/jwt"
@@ -56,12 +55,6 @@ func (apiServer *APIServer) OnConnecting(_ *centrifuge.Node, e centrifuge.Connec
 	}
 
 	apiServer.logger.Info().Int64("user_id", userID).Msg("user connected successfully")
-
-	userIDString := fmt.Sprintf("%d", user.ID)
-
-	if err := apiServer.centrifugeNode.Subscribe(userIDString, "user_"+userIDString); err != nil {
-		return nil, centrifuge.ConnectReply{}, centrifuge.ErrorInternal
-	}
 
 	return &websocketSession, centrifuge.ConnectReply{Data: b}, nil
 }

@@ -30,6 +30,7 @@ func (apiServer *APIServer) PublishEvent(channel string, event Event) (centrifug
 }
 
 type EventGameInvitation struct {
+	GameID    int64     `json:"game_id"`
 	Inviter   string    `json:"inviter"`
 	InvitedAt time.Time `json:"invited_at"`
 }
