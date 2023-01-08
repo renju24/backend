@@ -41,6 +41,13 @@ type Game struct {
 	game *pkggame.Game
 }
 
+// ClearBoard ...
+func (g *Game) ClearBoard() {
+	g.mu.Lock()
+	g.game = nil
+	g.mu.Unlock()
+}
+
 // ApplyMove ...
 func (g *Game) ApplyMove(userID int64, x, y int) (winner pkggame.Color, err error) {
 	g.mu.Lock()
