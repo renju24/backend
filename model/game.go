@@ -7,6 +7,12 @@ import (
 	pkggame "github.com/renju24/backend/pkg/game"
 )
 
+type PlayingGame struct {
+	ID            int64
+	BlackUsername string
+	WhiteUsername string
+}
+
 type Move struct {
 	GameID      int64
 	UserID      int64

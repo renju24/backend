@@ -248,6 +248,33 @@ func (db *Database) IsPlaying(userID int64) (bool, error) {
 	return ok, nil
 }
 
+func (db *Database) GetPlayingGame(userID int64) (*model.PlayingGame, error) {
+	var game model.PlayingGame
+	query := `
+		SELECT
+			g.id,
+			black.username as black_username,
+			white.username as white_username
+		FROM
+			games g
+			INNER JOIN users black ON g.black_user_id = black.id
+			INNER JOIN users white ON g.white_user_id = white.id
+		WHERE (g.black_user_id = $1 OR g.white_user_id = $1) AND g.status = $2;`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	if err := db.pool.QueryRow(ctx, query, userID, model.InProgress).Scan(
+		&game.ID,
+		&game.BlackUsername,
+		&game.WhiteUsername,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &game, nil
+}
+
 func (db *Database) DeclineGameInvitation(userID int64, gameID int64) error {
 	query := `DELETE FROM games WHERE (black_user_id = $1 OR white_user_id = $1) AND id = $2`
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)

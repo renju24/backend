@@ -36,6 +36,9 @@ type Database interface {
 	// Is user playing a game right now?
 	IsPlaying(userID int64) (bool, error)
 
+	// Returns the playing game.
+	GetPlayingGame(userID int64) (*model.PlayingGame, error)
+
 	// Find users by username.
 	FindUsers(username string) ([]*model.User, error)
 
