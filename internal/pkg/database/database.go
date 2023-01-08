@@ -295,8 +295,8 @@ func (db *Database) GetGameByID(gameID int64) (*model.Game, error) {
 	query := `
 		SELECT
 			id,
-			black_game_id,
-			white_game_id,
+			black_user_id,
+			black_user_id,
 			winner_id,
 			status,
 			started_at,
