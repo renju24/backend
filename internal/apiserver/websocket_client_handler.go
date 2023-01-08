@@ -99,12 +99,20 @@ func (*APIServer) OnSubRefresh(*websocket.Client, centrifuge.SubRefreshEvent) (c
 
 func (*APIServer) OnMessage(*websocket.Client, centrifuge.MessageEvent) {}
 
-func (*APIServer) OnPresence(*websocket.Client, centrifuge.PresenceEvent) (centrifuge.PresenceReply, error) {
-	return centrifuge.PresenceReply{}, nil
+func (app *APIServer) OnPresence(_ *websocket.Client, e centrifuge.PresenceEvent) (centrifuge.PresenceReply, error) {
+	result, err := app.centrifugeNode.Presence(e.Channel)
+	if err != nil {
+		return centrifuge.PresenceReply{}, err
+	}
+	return centrifuge.PresenceReply{Result: &result}, nil
 }
 
-func (*APIServer) OnPresenceStats(*websocket.Client, centrifuge.PresenceStatsEvent) (centrifuge.PresenceStatsReply, error) {
-	return centrifuge.PresenceStatsReply{}, nil
+func (app *APIServer) OnPresenceStats(_ *websocket.Client, e centrifuge.PresenceStatsEvent) (centrifuge.PresenceStatsReply, error) {
+	result, err := app.centrifugeNode.PresenceStats(e.Channel)
+	if err != nil {
+		return centrifuge.PresenceStatsReply{}, err
+	}
+	return centrifuge.PresenceStatsReply{Result: &result}, nil
 }
 
 func (*APIServer) OnHistory(*websocket.Client, centrifuge.HistoryEvent) (centrifuge.HistoryReply, error) {
