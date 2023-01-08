@@ -100,26 +100,26 @@ func TestForks(t *testing.T) {
 		// 	move:          moveFromStr("I8"),
 		// 	expectedError: nil,
 		// },
-		// { // todo
-		// 	iniStr:        "I9E8H8J8M8I6d2f2g2h1i1j1",
-		// 	move:          moveFromStr("I8"),
+		{ // todo
+			iniStr:        "I9E8H8J8M8I6d2f2g2h1i1j1",
+			move:          moveFromStr("I8"),
+			expectedError: nil,
+		},
+		// {
+		// 	iniStr:        "C7E7H7",
+		// 	move:          moveFromStr("F7"),
 		// 	expectedError: nil,
 		// },
-		{
-			iniStr:        "C7E7H7",
-			move:          moveFromStr("F7"),
-			expectedError: nil,
-		},
-		{
-			iniStr:        "B7C7E7H7",
-			move:          moveFromStr("F7"),
-			expectedError: nil,
-		},
-		{
-			iniStr:        "B7C7E7H7I7",
-			move:          moveFromStr("F7"),
-			expectedError: nil,
-		},
+		// {
+		// 	iniStr:        "B7C7E7H7",
+		// 	move:          moveFromStr("F7"),
+		// 	expectedError: nil,
+		// },
+		// {
+		// 	iniStr:        "B7C7E7H7I7",
+		// 	move:          moveFromStr("F7"),
+		// 	expectedError: nil,
+		// },
 	}
 
 	for _, testCase := range testCases {
