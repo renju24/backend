@@ -118,6 +118,31 @@ func TestForks(t *testing.T) {
 			move:          moveFromStr("F7"),
 			expectedError: nil,
 		},
+		{
+			iniStr:        "C11F10H10J10J9K9F8H8K8K7G6H6I6G4J4",
+			move:          moveFromStr("I7"),
+			expectedError: nil,
+		},
+		{
+			iniStr:        "H10H9J9G8H8J8K8L8F6G6H6J6K6H5J5J4",
+			move:          moveFromStr("I7"),
+			expectedError: nil,
+		},
+		{
+			iniStr:        "L12f11F10F9I9F8H8E7F7H6F5F3F2f1",
+			move:          moveFromStr("H9"),
+			expectedError: nil,
+		},
+		{
+			iniStr:        "E11E9G9I9H8E7F7E6H6J6",
+			move:          moveFromStr("H7"),
+			expectedError: nil,
+		},
+		{
+			iniStr:        "G9H9I9F8H8J8G7I7G6I6",
+			move:          moveFromStr("H6"),
+			expectedError: nil,
+		},
 	}
 
 	for _, testCase := range testCases {

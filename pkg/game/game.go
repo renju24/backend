@@ -134,13 +134,6 @@ func forkIsPermittedForColor(fork []int, c Color) bool {
 	return true
 }
 
-func indexIndiseBoard(i int) bool {
-	if i >= 0 && i <= MaxBoardIndex {
-		return true
-	}
-	return false
-}
-
 const (
 	rowState = iota
 	spaceState
