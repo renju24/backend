@@ -143,6 +143,11 @@ func TestForks(t *testing.T) {
 			move:          moveFromStr("H6"),
 			expectedError: nil,
 		},
+		{
+			iniStr:        "E11E9G9I9H8E7F7E6H6J6J4",
+			move:          moveFromStr("H7"),
+			expectedError: ErrInvalidForkForBlack,
+		},
 	}
 
 	for _, testCase := range testCases {
