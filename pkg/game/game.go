@@ -2,6 +2,8 @@ package game
 
 import (
 	"errors"
+
+	"github.com/renju24/backend/internal/pkg/apierror"
 )
 
 const BoardSize = 15
@@ -49,26 +51,16 @@ func NewGame() *Game {
 	return &Game{}
 }
 
-var (
-	ErrFirstMoveShouldBeBlack    = errors.New("first move should be made by black user")
-	ErrFirstMoveShouldBeInCenter = errors.New("first move should be in board's center")
-	ErrCoordinatesOutside        = errors.New("coordinates outside the board")
-	ErrFieldAlreadyTaken         = errors.New("field is already taken")
-	ErrInvalidTurn               = errors.New("invalid turn")
-	ErrRow6IsBannedForBlack      = errors.New("black player cannot make row of length 6 and greater")
-	ErrInvalidForkForBlack       = errors.New("black can make only 3x4 forks")
-)
-
 func (g *Game) getColorAt(x, y int) (Color, error) {
 	if x >= BoardSize || x < 0 || y >= BoardSize || y < 0 {
-		return Nil, ErrCoordinatesOutside
+		return Nil, apierror.ErrCoordinatesOutside
 	}
 	return g.board[x*BoardSize+y], nil
 }
 
 func (g *Game) setColorAt(x, y int, c Color) error {
 	if x >= BoardSize || x < 0 || y >= BoardSize || y < 0 {
-		return ErrCoordinatesOutside
+		return apierror.ErrCoordinatesOutside
 	}
 	g.board[x*BoardSize+y] = c
 	return nil
@@ -78,33 +70,33 @@ func (g *Game) ApplyMove(move Move) (winner Color, err error) {
 	// If it's the first move, then user should be black and move should be in board's center.
 	if g.lastMove.color == Nil {
 		if move.color != Black {
-			return Nil, ErrFirstMoveShouldBeBlack
+			return Nil, apierror.ErrFirstMoveShouldBeBlack
 		}
 		if move.x != 7 || move.y != 7 {
-			return Nil, ErrFirstMoveShouldBeInCenter
+			return Nil, apierror.ErrFirstMoveShouldBeInCenter
 		}
 	}
 
 	// Check the last move was made by another player.
 	if g.lastMove.color == move.color {
-		return Nil, ErrInvalidTurn
+		return Nil, apierror.ErrInvalidTurn
 	}
 
 	c, err := g.getColorAt(move.x, move.y)
 
 	// Check the coordinates are not outside the board.
 	if err != nil {
-		return Nil, ErrCoordinatesOutside
+		return Nil, apierror.ErrCoordinatesOutside
 	}
 	// Check the field is not already taken.
 	if c != Nil {
-		return Nil, ErrFieldAlreadyTaken
+		return Nil, apierror.ErrFieldAlreadyTaken
 	}
 
 	lastMoveLength := g.maxRowAfterMove(move)
 
 	if lastMoveLength > 5 && move.color == Black {
-		return Nil, ErrRow6IsBannedForBlack
+		return Nil, apierror.ErrRow6IsBannedForBlack
 	}
 
 	err = g.checkForFork(move)
@@ -338,7 +330,7 @@ func (g *Game) checkForFork(m Move) error {
 	}
 
 	if !forkIsPermittedForColor(fork, m.color) {
-		return ErrInvalidForkForBlack
+		return apierror.ErrInvalidForkForBlack
 	} else {
 		return nil
 	}

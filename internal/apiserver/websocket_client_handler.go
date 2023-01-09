@@ -61,6 +61,14 @@ func (apiServer *APIServer) OnRPC(c *websocket.Client, rpc centrifuge.RPCEvent) 
 		response, err = apiServer.CallForGame(c, rpc.Data)
 	case "top_10":
 		response, err = apiServer.Top10(c, rpc.Data)
+	case "decline_game_invitation":
+		response, err = apiServer.DeclineGameInvitation(c, rpc.Data)
+	case "accept_game_invitation":
+		response, err = apiServer.AcceptGameInvitation(c, rpc.Data)
+	case "make_move":
+		response, err = apiServer.MakeMove(c, rpc.Data)
+	case "is_playing":
+		response, err = apiServer.IsPlaying(c, rpc.Data)
 	default:
 		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
 	}
@@ -93,12 +101,20 @@ func (*APIServer) OnSubRefresh(*websocket.Client, centrifuge.SubRefreshEvent) (c
 
 func (*APIServer) OnMessage(*websocket.Client, centrifuge.MessageEvent) {}
 
-func (*APIServer) OnPresence(*websocket.Client, centrifuge.PresenceEvent) (centrifuge.PresenceReply, error) {
-	return centrifuge.PresenceReply{}, nil
+func (app *APIServer) OnPresence(_ *websocket.Client, e centrifuge.PresenceEvent) (centrifuge.PresenceReply, error) {
+	result, err := app.centrifugeNode.Presence(e.Channel)
+	if err != nil {
+		return centrifuge.PresenceReply{}, err
+	}
+	return centrifuge.PresenceReply{Result: &result}, nil
 }
 
-func (*APIServer) OnPresenceStats(*websocket.Client, centrifuge.PresenceStatsEvent) (centrifuge.PresenceStatsReply, error) {
-	return centrifuge.PresenceStatsReply{}, nil
+func (app *APIServer) OnPresenceStats(_ *websocket.Client, e centrifuge.PresenceStatsEvent) (centrifuge.PresenceStatsReply, error) {
+	result, err := app.centrifugeNode.PresenceStats(e.Channel)
+	if err != nil {
+		return centrifuge.PresenceStatsReply{}, err
+	}
+	return centrifuge.PresenceStatsReply{Result: &result}, nil
 }
 
 func (*APIServer) OnHistory(*websocket.Client, centrifuge.HistoryEvent) (centrifuge.HistoryReply, error) {

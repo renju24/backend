@@ -7,6 +7,7 @@ import (
 	"testing"
 	"unicode"
 
+	"github.com/renju24/backend/internal/pkg/apierror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -76,17 +77,17 @@ func TestForks(t *testing.T) {
 		{
 			iniStr:        "c12d11c10d9i14I12I11H8F6I6",
 			move:          moveFromStr("I9"),
-			expectedError: ErrInvalidForkForBlack,
+			expectedError: apierror.ErrInvalidForkForBlack,
 		},
 		{
 			iniStr:        "D10E9F8F6E5H8i8i7j9j8j6k5",
 			move:          moveFromStr("G7"),
-			expectedError: ErrInvalidForkForBlack,
+			expectedError: apierror.ErrInvalidForkForBlack,
 		},
 		{
 			iniStr:        "j12H8G7i8J8J7g3j3",
 			move:          moveFromStr("J10"),
-			expectedError: ErrInvalidForkForBlack,
+			expectedError: apierror.ErrInvalidForkForBlack,
 		},
 		{
 			iniStr:        "D8F8H8K8G6G5d2e1f2g1h2i1",
@@ -146,7 +147,7 @@ func TestForks(t *testing.T) {
 		{
 			iniStr:        "E11E9G9I9H8E7F7E6H6J6J4",
 			move:          moveFromStr("H7"),
-			expectedError: ErrInvalidForkForBlack,
+			expectedError: apierror.ErrInvalidForkForBlack,
 		},
 	}
 
@@ -171,7 +172,7 @@ func TestGame(t *testing.T) {
 				NewMove(1, 5, White),
 			},
 			expectedWinner: Nil,
-			expectedError:  ErrFirstMoveShouldBeBlack,
+			expectedError:  apierror.ErrFirstMoveShouldBeBlack,
 		},
 		// Case when first move is not in center.
 		{
@@ -179,7 +180,7 @@ func TestGame(t *testing.T) {
 				NewMove(1, 2, Black),
 			},
 			expectedWinner: Nil,
-			expectedError:  ErrFirstMoveShouldBeInCenter,
+			expectedError:  apierror.ErrFirstMoveShouldBeInCenter,
 		},
 		// Case when the X-coordinate is outside the board.
 		{
@@ -188,7 +189,7 @@ func TestGame(t *testing.T) {
 				NewMove(-1, 5, White),
 			},
 			expectedWinner: Nil,
-			expectedError:  ErrCoordinatesOutside,
+			expectedError:  apierror.ErrCoordinatesOutside,
 		},
 		// Case when the Y-coordinate is outside the board.
 		{
@@ -197,7 +198,7 @@ func TestGame(t *testing.T) {
 				NewMove(5, 15, White),
 			},
 			expectedWinner: Nil,
-			expectedError:  ErrCoordinatesOutside,
+			expectedError:  apierror.ErrCoordinatesOutside,
 		},
 		// Case when field is already taken.
 		{
@@ -206,7 +207,7 @@ func TestGame(t *testing.T) {
 				NewMove(7, 7, White),
 			},
 			expectedWinner: Nil,
-			expectedError:  ErrFieldAlreadyTaken,
+			expectedError:  apierror.ErrFieldAlreadyTaken,
 		},
 		// Case when the last move was made by same player.
 		{
@@ -216,7 +217,7 @@ func TestGame(t *testing.T) {
 				NewMove(1, 0, White),
 			},
 			expectedWinner: Nil,
-			expectedError:  ErrInvalidTurn,
+			expectedError:  apierror.ErrInvalidTurn,
 		},
 		// Case when black should win.
 		{
@@ -270,7 +271,7 @@ func TestGame(t *testing.T) {
 				NewMove(7, 8, Black),
 			},
 			expectedWinner: Nil,
-			expectedError:  ErrRow6IsBannedForBlack,
+			expectedError:  apierror.ErrRow6IsBannedForBlack,
 		},
 	}
 	for testCaseNum, testCase := range testCases {
