@@ -45,23 +45,21 @@ func initGame(iniStr string) *Game {
 }
 
 func printField(g *Game) {
-	for i := 0; i < 15; i++ {
-		for j := 0; j < 15; j++ {
-			var c rune
-			switch g.board[i*BoardSize+j] {
-			case Black:
-				c = '*'
-			case White:
-				c = 'o'
-			case Nil:
-				c = '-'
-			}
-			fmt.Printf("%c", c)
+	for i, v := range g.board {
+		if i%BoardSize == 0 {
+			fmt.Println()
 		}
-		fmt.Print("\n")
+		var c rune
+		switch v {
+		case Black:
+			c = '*'
+		case White:
+			c = 'o'
+		case Nil:
+			c = '-'
+		}
+		fmt.Printf("%c", c)
 	}
-
-	fmt.Print("\n")
 }
 
 func TestForks(t *testing.T) {
@@ -70,62 +68,62 @@ func TestForks(t *testing.T) {
 		move          Move
 		expectedError error
 	}{
-		// {
-		// 	iniStr:        "G9I9j9H8H7k4j3i2",
-		// 	move:          moveFromStr("H9"),
-		// 	expectedError: nil,
-		// },
-		// {
-		// 	iniStr:        "c12d11c10d9i14I12I11H8F6I6",
-		// 	move:          moveFromStr("I9"),
-		// 	expectedError: ErrInvalidForkForBlack,
-		// },
-		// {
-		// 	iniStr:        "D10E9F8F6E5H8i8i7j9j8j6k5",
-		// 	move:          moveFromStr("G7"),
-		// 	expectedError: ErrInvalidForkForBlack,
-		// },
-		// {
-		// 	iniStr:        "j12H8G7i8J8J7g3j3",
-		// 	move:          moveFromStr("J10"),
-		// 	expectedError: ErrInvalidForkForBlack,
-		// },
-		// {
-		// 	iniStr:        "D8F8H8K8G6G5d2e1f2g1h2i1",
-		// 	move:          moveFromStr("G8"),
-		// 	expectedError: nil,
-		// },
-		// {
-		// 	iniStr:        "E8G8H8J8J9L8G6F5e2f2g2i2j2h1i1j1",
-		// 	move:          moveFromStr("I8"),
-		// 	expectedError: nil,
-		// },
+		{
+			iniStr:        "G9I9j9H8H7k4j3i2",
+			move:          moveFromStr("H9"),
+			expectedError: nil,
+		},
+		{
+			iniStr:        "c12d11c10d9i14I12I11H8F6I6",
+			move:          moveFromStr("I9"),
+			expectedError: ErrInvalidForkForBlack,
+		},
+		{
+			iniStr:        "D10E9F8F6E5H8i8i7j9j8j6k5",
+			move:          moveFromStr("G7"),
+			expectedError: ErrInvalidForkForBlack,
+		},
+		{
+			iniStr:        "j12H8G7i8J8J7g3j3",
+			move:          moveFromStr("J10"),
+			expectedError: ErrInvalidForkForBlack,
+		},
+		{
+			iniStr:        "D8F8H8K8G6G5d2e1f2g1h2i1",
+			move:          moveFromStr("G8"),
+			expectedError: nil,
+		},
+		{
+			iniStr:        "E8G8H8J8J9L8G6F5e2f2g2i2j2h1i1j1",
+			move:          moveFromStr("I8"),
+			expectedError: nil,
+		},
 		{ // todo
 			iniStr:        "I9E8H8J8M8I6d2f2g2h1i1j1",
 			move:          moveFromStr("I8"),
 			expectedError: nil,
 		},
-		// {
-		// 	iniStr:        "C7E7H7",
-		// 	move:          moveFromStr("F7"),
-		// 	expectedError: nil,
-		// },
-		// {
-		// 	iniStr:        "B7C7E7H7",
-		// 	move:          moveFromStr("F7"),
-		// 	expectedError: nil,
-		// },
-		// {
-		// 	iniStr:        "B7C7E7H7I7",
-		// 	move:          moveFromStr("F7"),
-		// 	expectedError: nil,
-		// },
+		{
+			iniStr:        "C7E7H7",
+			move:          moveFromStr("F7"),
+			expectedError: nil,
+		},
+		{
+			iniStr:        "B7C7E7H7",
+			move:          moveFromStr("F7"),
+			expectedError: nil,
+		},
+		{
+			iniStr:        "B7C7E7H7I7",
+			move:          moveFromStr("F7"),
+			expectedError: nil,
+		},
 	}
 
 	for _, testCase := range testCases {
 		g := initGame(testCase.iniStr)
-		g.board[testCase.move.x*BoardSize+testCase.move.y] = testCase.move.color
-		printField(g)
+		// g.board[testCase.move.x*BoardSize+testCase.move.y] = testCase.move.color
+		// printField(g)
 		actualErr := g.checkForFork(testCase.move)
 		require.ErrorIs(t, testCase.expectedError, actualErr)
 	}

@@ -2,7 +2,6 @@ package game
 
 import (
 	"errors"
-	"fmt"
 )
 
 const BoardSize = 15
@@ -164,16 +163,57 @@ func nextIndex(curIndex, offset int) (int, error) {
 	return next, err
 }
 
+type row struct {
+	centerLen int
+	sideLen   []int
+	gapIdx    []int
+	endIdx    []int
+}
+
+func newRow() row {
+	return row{
+		sideLen: make([]int, 0),
+		gapIdx:  make([]int, 0),
+		endIdx:  make([]int, 0),
+	}
+}
+
+const (
+	FOUR = iota
+	OPEN_FOUR
+	NONE
+)
+
+func (g *Game) checkFour(r row, m Move) int {
+	if len(r.gapIdx) == 1 { // if 2 sections
+		x, y := coordinatesByInex(r.gapIdx[0])
+		if g.maxRowAfterMove(NewMove(x, y, m.color)) <= 5 {
+			return FOUR
+		}
+	} else { // one section
+		cnt := 0
+		for _, v := range r.endIdx {
+			x, y := coordinatesByInex(v)
+			if g.maxRowAfterMove(NewMove(x, y, m.color)) <= 5 {
+				cnt += 1
+			}
+		}
+		if cnt == 2 {
+			return OPEN_FOUR
+		}
+	}
+	return NONE
+}
+
 func (g *Game) checkForFork(m Move) error {
 	fork := []int{}
 	startIndex := m.x*BoardSize + m.y
 
 	for _, offset := range allDirectionOffsets {
-		centerLen := 1
-		sideLengths := [2]int{0, 0}
-		borderGapLengths := [2]int{0, 0}
+		r := newRow()
+		r.centerLen = 1
 
-		for i, dir := range [2]int{-1, 1} { // i = -1, 1 to go on positive and negative directions
+		for _, dir := range [2]int{-1, 1} { // i = -1, 1 to go on positive and negative directions
 			prevLen := 0
 			state := rowState
 			finished := false
@@ -187,12 +227,10 @@ func (g *Game) checkForFork(m Move) error {
 					switch state {
 					case rowState:
 						if rowNum == 0 {
-							centerLen += prevLen
+							r.centerLen += prevLen
 						} else {
-							sideLengths[i] = prevLen
+							r.sideLen = append(r.sideLen, prevLen)
 						}
-					case spaceState:
-						borderGapLengths[i] = prevLen
 					}
 					break
 				}
@@ -203,12 +241,11 @@ func (g *Game) checkForFork(m Move) error {
 						prevLen += 1
 					} else {
 						if rowNum == 0 {
-							centerLen += prevLen
+							r.centerLen += prevLen
 						} else {
-							sideLengths[i] = prevLen
+							r.sideLen = append(r.sideLen, prevLen)
 						}
 						if g.board[curIndex] == Nil {
-							prevLen = 1
 							state = spaceState
 						} else {
 							finished = true
@@ -216,13 +253,16 @@ func (g *Game) checkForFork(m Move) error {
 					}
 				case spaceState:
 					if g.board[curIndex] == Nil {
-						prevLen += 1
+						r.endIdx = append(r.endIdx, curIndex-dir*offset)
+						finished = true
 					} else {
-						if g.board[curIndex] == m.color && prevLen == 1 && rowNum == 0 {
+						if g.board[curIndex] == m.color && rowNum == 0 {
+							r.gapIdx = append(r.gapIdx, curIndex-dir*offset)
 							rowNum += 1
+							prevLen = 1
 							state = rowState
 						} else {
-							borderGapLengths[i] = prevLen
+							r.endIdx = append(r.endIdx, curIndex-dir*offset)
 							finished = true
 						}
 					}
@@ -234,22 +274,74 @@ func (g *Game) checkForFork(m Move) error {
 			}
 		}
 
-		if sideLengths[0]*sideLengths[1] != 0 {
-			if centerLen+sideLengths[0] == 4 && centerLen+sideLengths[1] == 4 {
-				fork = append(fork, 4, 4)
+		if len(r.endIdx) < 2 { //blocked on one or both sides
+			continue
+		}
+
+		if len(r.sideLen) == 2 { // case when we have 3 sections in a row
+			if r.centerLen+r.sideLen[0] == 4 && r.centerLen+r.sideLen[1] == 4 {
+				cnt := 0
+				for v := range r.gapIdx {
+					x, y := coordinatesByInex(v)
+					if g.maxRowAfterMove(NewMove(x, y, m.color)) <= 5 {
+						cnt += 1
+					}
+				}
+				if cnt == 2 {
+					fork = append(fork, 4, 4)
+				}
 			}
 			continue
 		}
-		if borderGapLengths[0]*borderGapLengths[1] == 0 { //blocked on one or both sides
-			continue
+
+		totalLen := r.centerLen
+		for _, v := range r.sideLen {
+			totalLen += v
 		}
 
-		totalLen := centerLen + sideLengths[0] + sideLengths[1]
-		if totalLen >= 3 && (borderGapLengths[0]+borderGapLengths[1]-(5-totalLen) >= 2) {
-			fork = append(fork, totalLen)
+		switch totalLen {
+		case 3:
+			g.board[startIndex] = m.color
+			if len(r.gapIdx) == 1 {
+				x, y := coordinatesByInex(r.gapIdx[0])
+				r.gapIdx = nil
+				tmpMove := NewMove(x, y, m.color)
+				err := g.checkForFork(tmpMove)
+				if err == nil && g.checkFour(r, tmpMove) == OPEN_FOUR {
+					fork = append(fork, 3)
+				}
+			} else {
+				for i, v := range r.endIdx {
+					stopCheck := false
+					x, y := coordinatesByInex(v)
+					tmpMove := NewMove(x, y, m.color)
+					err := g.checkForFork(tmpMove)
+					if err == nil {
+						g.board[v] = m.color
+						r.endIdx[i] += []int{-1, 1}[i] * offset
+						x, y := coordinatesByInex(r.endIdx[i])
+						iMove := NewMove(x, y, m.color)
+						if g.checkFour(r, iMove) == OPEN_FOUR {
+							fork = append(fork, 3)
+							stopCheck = true
+						}
+						r.endIdx[i] -= []int{-1, 1}[i] * offset
+						g.board[v] = Nil
+					}
+					if stopCheck {
+						break
+					}
+				}
+			}
+			g.board[startIndex] = Nil
+		case 4:
+			fourType := g.checkFour(r, m)
+
+			if fourType == FOUR || fourType == OPEN_FOUR {
+				fork = append(fork, 4)
+			}
 		}
 
-		fmt.Println()
 	}
 
 	if !forkIsPermittedForColor(fork, m.color) {
@@ -259,24 +351,24 @@ func (g *Game) checkForFork(m Move) error {
 	}
 }
 
-func (g *Game) maxRowAfterMove(move Move) int {
-	startIndex := move.x*BoardSize + move.y
+func (g *Game) maxRowAfterMove(m Move) int {
+	startIndex := m.x*BoardSize + m.y
 	maxLength := 1
-
 	for _, offset := range allDirectionOffsets {
-		curIndex := startIndex - offset
-		curLength := 1
-		for curIndex >= 0 && g.board[curIndex] == move.color {
-			curLength++
-			curIndex -= offset
+		curLen := 1
+		for _, dir := range [2]int{-1, 1} {
+			curIndex := startIndex
+			for {
+				var err error
+				curIndex, err = nextIndex(curIndex, offset*dir)
+				if err != nil || g.board[curIndex] != m.color {
+					break
+				}
+				curLen += 1
+			}
 		}
-		curIndex = startIndex + offset
-		for curIndex <= MaxBoardIndex && g.board[curIndex] == move.color {
-			curLength++
-			curIndex += offset
-		}
-		if curLength > maxLength {
-			maxLength = curLength
+		if curLen > maxLength {
+			maxLength = curLen
 		}
 	}
 	return maxLength
