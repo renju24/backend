@@ -80,4 +80,6 @@ var (
 	ErrCoordinatesOutside           = &centrifuge.Error{425, "coordinates outside the board", false}
 	ErrFieldAlreadyTaken            = &centrifuge.Error{426, "field is already taken", false}
 	ErrInvalidTurn                  = &centrifuge.Error{427, "invalid turn", false}
+	ErrRow6IsBannedForBlack         = &centrifuge.Error{428, "black player cannot make row of length 6 and greater", false}
+	ErrInvalidForkForBlack          = &centrifuge.Error{429, "black can make only 3x4 forks", false}
 )
