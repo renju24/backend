@@ -41,6 +41,8 @@ func (app *APIServer) OnSubscribe(c *websocket.Client, e centrifuge.SubscribeEve
 		}
 	}
 
+	app.logger.Info().Msgf("user %q subscribed channel %q", c.UserID(), e.Channel)
+
 	return centrifuge.SubscribeReply{}, nil
 }
 

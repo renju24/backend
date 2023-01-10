@@ -1,16 +1,13 @@
 package apiserver
 
 import (
-	"html/template"
 	"net/http"
-	"strconv"
 
 	"github.com/armantarkhanian/jwt"
 	"github.com/armantarkhanian/websocket"
 	"github.com/centrifugal/centrifuge"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/renju24/backend/internal/pkg/apierror"
 	"github.com/renju24/backend/internal/pkg/config"
 	"github.com/rs/zerolog"
 )
@@ -93,6 +90,9 @@ func initApi(runMode string, db Database, router *gin.Engine, logger *zerolog.Lo
 	corsConfig.AllowAllOrigins = true
 	corsConfig.AllowWebSockets = true
 
+	// Static assets directory.
+	// a.router.Use(static.Serve("/", static.LocalFile("./internal/apiserver/front", true)))
+
 	a.router.Use(
 		sameSiteMiddleware(a),
 		cors.New(corsConfig),
@@ -100,68 +100,24 @@ func initApi(runMode string, db Database, router *gin.Engine, logger *zerolog.Lo
 	)
 
 	a.router.NoRoute(func(c *gin.Context) {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
+		// c.AbortWithStatus(http.StatusNotFound)
+		c.File("./internal/apiserver/front/index.html")
+		// return
 	})
-
-	// TODO: just for test. Remove it in production.
-	a.router.SetHTMLTemplate(template.Must(template.New("").Parse(`
-	{{ define "unauthorized.html" }}
-		<b>Вы не авторизованы!</b><br><br>
-
-		<a href="/api/v1/oauth2/web/google" style="outline: none;text-decoration: none;">
-			<img src="assets/images/logos/google.svg" width="30px" style="margin:10px;">
-		</a>
-		<a href="/api/v1/oauth2/web/yandex" style="outline: none;text-decoration: none;">
-			<img src="assets/images/logos/yandex.svg" width="30px" style="margin:10px;">
-		</a>
-		<a href="/api/v1/oauth2/web/vk" style="outline: none;text-decoration: none;">
-			<img src="assets/images/logos/vk.svg" width="30px" style="margin:10px;">
-		</a>
-	{{ end }}
-
-	{{ define "authorized.html" }}
-		<b>Вы авторизованы!</b><br><br>
-
-		<b>ID</b>: {{ .ID }}<br>
-		<b>Username</b>: {{ .Username }}<br>
-		<b>Email</b>: {{ .Email }}<br><br>
-
-		<a href="/logout">Логаут</a>
-	{{ end }}
-	`)))
 
 	// Static assets directory.
 	a.router.Static("/assets", "./assets")
 
-	// Main page.
-	a.router.GET("/", func(c *gin.Context) {
-		token, _ := c.Cookie(a.config.Server.Token.Cookie.Name)
-		var payload jwt.Payload
-		if err := a.jwt.Decode(token, &payload); err != nil { // If user is not authorized.
-			c.HTML(http.StatusOK, "unauthorized.html", nil)
-			return
-		}
-		userID, err := strconv.ParseInt(payload.Subject, 10, 64)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, &apierror.Error{
-				Error: apierror.ErrorInternal,
-			})
-			return
-		}
-		user, err := a.db.GetUserByID(userID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, &apierror.Error{
-				Error: apierror.ErrorInternal,
-			})
-			return
-		}
-		c.HTML(http.StatusOK, "authorized.html", map[string]interface{}{
-			"ID":       user.ID,
-			"Username": user.Username,
-			"Email":    user.Email,
-		})
-	})
+	a.router.StaticFile("/asset-manifest.json", "./internal/apiserver/front/asset-manifest.json")
+	a.router.StaticFile("/favicon.ico", "./internal/apiserver/front/favicon.ico")
+	a.router.StaticFile("/index.html", "./internal/apiserver/front/index.html")
+	a.router.StaticFile("/logo192.png", "./internal/apiserver/front/logo192.png")
+	a.router.StaticFile("/logo512.png", "./internal/apiserver/front/logo512.png")
+	a.router.StaticFile("/logo.ico", "./internal/apiserver/front/logo.ico")
+	a.router.StaticFile("/logo.png", "./internal/apiserver/front/logo.png")
+	a.router.StaticFile("/manifest.json", "./internal/apiserver/front/manifest.json")
+	a.router.StaticFile("/robots.txt", "./internal/apiserver/front/robots.txt")
+	a.router.Static("/static", "./internal/apiserver/front/static")
 
 	a.router.GET("/logout", func(c *gin.Context) {
 		c.SetCookie(
