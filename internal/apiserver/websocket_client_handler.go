@@ -32,7 +32,7 @@ func (app *APIServer) OnSubscribe(c *websocket.Client, e centrifuge.SubscribeEve
 		}
 
 		// Check if the user is a game member.
-		ok, err := app.db.IsGameMember(gameID, userID)
+		ok, err := app.db.IsGameMember(userID, gameID)
 		if err != nil {
 			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 		}
