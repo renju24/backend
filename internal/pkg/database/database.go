@@ -13,8 +13,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/renju24/backend/internal/pkg/apierror"
 	"github.com/renju24/backend/internal/pkg/config"
+	"github.com/renju24/backend/internal/pkg/elo"
 	oauth "github.com/renju24/backend/internal/pkg/oauth2"
 	"github.com/renju24/backend/model"
+	pkggame "github.com/renju24/backend/pkg/game"
 )
 
 const DefaultQueryTimeout = 5 * time.Second
@@ -350,9 +352,53 @@ func (db *Database) CreateMove(gameID, userID int64, x, y int) error {
 }
 
 func (db *Database) FinishGameWithWinner(gameID, winnerID int64) error {
-	query := `UPDATE games SET status = $1, winner_id = $2, finished_at = NOW() WHERE id = $3`
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout*2)
 	defer cancel()
-	_, err := db.pool.Exec(ctx, query, model.Finished, winnerID, gameID)
-	return err
+	tx, err := db.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	var (
+		blackUserID  int64
+		blackRanking int
+		whiteUserID  int64
+		whiteRanking int
+	)
+	err = tx.QueryRow(ctx, `
+		SELECT
+			g.black_user_id,
+			black.ranking,
+			g.white_user_id,
+			white.ranking
+		FROM
+			games g
+			INNER JOIN users black ON g.black_user_id = black.id
+			INNER JOIN users white ON g.white_user_id = white.id
+		WHERE g.id = $1`, gameID).Scan(&blackUserID, &blackRanking, &whiteUserID, &whiteRanking)
+	if err != nil {
+		_ = tx.Rollback(ctx)
+		return err
+	}
+	winnerColor := pkggame.White
+	if blackUserID == winnerID {
+		winnerColor = pkggame.Black
+	}
+	newBlackRating, newWhiteRating := elo.Calculate(blackRanking, whiteRanking, winnerColor)
+	if _, err = tx.Exec(ctx, `UPDATE users SET ranking = $1 WHERE id = $2`, newBlackRating, blackUserID); err != nil {
+		_ = tx.Rollback(ctx)
+		return err
+	}
+	if _, err = tx.Exec(ctx, `UPDATE users SET ranking = $1 WHERE id = $2`, newWhiteRating, whiteUserID); err != nil {
+		_ = tx.Rollback(ctx)
+		return err
+	}
+	if _, err = tx.Exec(ctx,
+		`UPDATE games SET status = $1, winner_id = $2, finished_at = NOW() WHERE id = $3`,
+		model.Finished, winnerID, gameID,
+	); err != nil {
+		_ = tx.Rollback(ctx)
+		return err
+
+	}
+	return tx.Commit(ctx)
 }
