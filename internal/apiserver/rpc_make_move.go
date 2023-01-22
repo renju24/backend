@@ -73,28 +73,29 @@ func (apiServer *APIServer) MakeMove(c *websocket.Client, jsonData []byte) (*RPC
 	}
 	// Publish move into game's channel.
 	gameChannel := fmt.Sprintf("game_%d", game.ID)
-	var event Event
-	switch winnerColor {
-	case pkggame.Nil:
-		event = &EventMove{
-			UserID:      userID,
-			XCoordinate: req.XCoordinate,
-			YCoordinate: req.YCoordinate,
-		}
-	default:
-		// Finish game if there is a winner.
+	// Publish move.
+	if _, err = apiServer.PublishEvent(gameChannel, &EventMove{
+		UserID:      userID,
+		XCoordinate: req.XCoordinate,
+		YCoordinate: req.YCoordinate,
+	}); err != nil {
+		apiServer.logger.Error().Err(err).Send()
+		return nil, apierror.ErrorInternal
+	}
+	// Finish game if there is a winner.
+	if winnerColor != pkggame.Nil {
 		winnerID := game.GetUserIDByColor(winnerColor)
-		event = &EventGameEndedWithWinner{
-			WinnerID: winnerID,
-		}
 		if err = apiServer.db.FinishGameWithWinner(req.GameID, winnerID); err != nil {
 			apiServer.logger.Error().Err(err).Send()
 			return nil, apierror.ErrorInternal
 		}
-	}
-	if _, err = apiServer.PublishEvent(gameChannel, event); err != nil {
-		apiServer.logger.Error().Err(err).Send()
-		return nil, apierror.ErrorInternal
+		// Publish event.
+		if _, err = apiServer.PublishEvent(gameChannel, &EventGameEndedWithWinner{
+			WinnerID: winnerID,
+		}); err != nil {
+			apiServer.logger.Error().Err(err).Send()
+			return nil, apierror.ErrorInternal
+		}
 	}
 	return &RPCMakeMoveResponse{}, nil
 }
