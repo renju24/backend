@@ -198,7 +198,8 @@ func (db *Database) GameHistory(username string) ([]model.GameHistoryItem, error
 			LEFT  JOIN users winner ON g.winner_id = winner.id
 		WHERE
 			g.finished_at IS NOT NULL
-			AND (black.username = $1 OR white.username = $1);`
+			AND (black.username = $1 OR white.username = $1)
+		ORDER BY g.id DESC;`
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
 	defer cancel()
 	rows, err := db.pool.Query(ctx, query, username)
