@@ -71,6 +71,8 @@ func (apiServer *APIServer) OnRPC(c *websocket.Client, rpc centrifuge.RPCEvent) 
 		response, err = apiServer.MakeMove(c, rpc.Data)
 	case "is_playing":
 		response, err = apiServer.IsPlaying(c, rpc.Data)
+	case "get_board_state":
+		response, err = apiServer.BoardState(c, rpc.Data)
 	default:
 		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
 	}
