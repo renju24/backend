@@ -80,3 +80,12 @@ type EventGameEndedInDraw struct{}
 func (e *EventGameEndedInDraw) EventType() string {
 	return "game_ended_in_draw"
 }
+
+type EventUserLeftGame struct {
+	WhoLeftGameID int64  `json:"who_left_game"`
+	WinnerID      *int64 `json:"winner_id"`
+}
+
+func (e *EventUserLeftGame) EventType() string {
+	return "user_left_game"
+}

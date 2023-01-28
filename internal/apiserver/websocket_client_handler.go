@@ -73,6 +73,8 @@ func (apiServer *APIServer) OnRPC(c *websocket.Client, rpc centrifuge.RPCEvent) 
 		response, err = apiServer.IsPlaying(c, rpc.Data)
 	case "get_board_state":
 		response, err = apiServer.BoardState(c, rpc.Data)
+	case "leave_game":
+		response, err = apiServer.LeaveGame(c, rpc.Data)
 	default:
 		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
 	}

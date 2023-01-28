@@ -21,6 +21,9 @@ type Database interface {
 	// Create new game.
 	CreateGame(blackUserID, whiteUserID int64) (gameID int64, err error)
 
+	// Delete a game.
+	DeleteGame(gameID int64) error
+
 	// Get game by id.
 	GetGameByID(gameID int64) (*model.Game, error)
 
