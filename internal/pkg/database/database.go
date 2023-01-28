@@ -405,9 +405,22 @@ func (db *Database) FinishGameWithWinner(gameID, winnerID int64) error {
 }
 
 func (db *Database) DeleteGame(gameID int64) error {
-	query := `DELETE FROM games WHERE id = $1;`
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
 	defer cancel()
-	_, err := db.pool.Exec(ctx, query, gameID)
-	return err
+	tx, err := db.pool.Begin(ctx)
+	if err != nil {
+		_ = tx.Rollback(ctx)
+		return err
+	}
+	_, err = tx.Exec(ctx, `DELETE FROM moves WHERE game_id = $1;`, gameID)
+	if err != nil {
+		_ = tx.Rollback(ctx)
+		return err
+	}
+	_, err = tx.Exec(ctx, `DELETE FROM games WHERE id = $1;`, gameID)
+	if err != nil {
+		_ = tx.Rollback(ctx)
+		return err
+	}
+	return tx.Commit(ctx)
 }
