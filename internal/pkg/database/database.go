@@ -403,3 +403,11 @@ func (db *Database) FinishGameWithWinner(gameID, winnerID int64) error {
 	}
 	return tx.Commit(ctx)
 }
+
+func (db *Database) DeleteGame(gameID int64) error {
+	query := `DELETE FROM games WHERE game_id = $1;`
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultQueryTimeout)
+	defer cancel()
+	_, err := db.pool.Exec(ctx, query, gameID)
+	return err
+}
